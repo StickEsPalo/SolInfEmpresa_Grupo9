@@ -1,75 +1,65 @@
-# Pangea Meeple - prototipo de eCommerce de importación
+# Pangea Meeple — web preparada para DonDominio
 
-Pangea Meeple es un prototipo académico de canal digital de venta para un comercio de juegos de mesa y puzzles de diseño europeo y asiático. No hay actividad comercial, pagos reales, cuentas reales ni credenciales en el proyecto.
+Prototipo académico de tienda. La página usa PHP en el hosting para leer productos, categorías, orígenes y stock, y para guardar pedidos, pagos simulados, direcciones, incidencias y eventos en la base de datos asociada al plan de DonDominio. No hace falta instalar ni arrancar una base de datos en el ordenador.
 
-## Puesta en marcha
+## Requisitos
 
-Es una aplicación estática sin dependencias. Basta con abrir `index.html` en un navegador moderno. Para una experiencia idéntica a un despliegue:
+- Dominio vinculado a un plan de hosting web con PHP y base de datos.
+- PHP con PDO y el controlador PDO MySQL habilitado.
+- Una base de datos creada desde el panel de DonDominio.
 
-```powershell
-cd outputs\pangea-meeple-import
-python -m http.server 8080
-```
+La aplicación se conecta al servicio de base de datos del hosting usando los datos que aparecen en el panel. El proyecto no configura ni administra el motor del proveedor.
 
-Después, abrir `http://localhost:8080`. Puede publicarse en GitHub Pages, Netlify o Cloudflare Pages sin configuración adicional.
+## Crear e importar la base de datos
 
-## Usuarios y datos de prueba
+1. Entra en el área de cliente de DonDominio. Abre Hosting y Correo, selecciona el dominio y entra en Bases de datos.
+2. Crea una base y guarda el servidor/host, el nombre, el usuario y la contraseña que muestra el panel. Copia el nombre completo, incluido cualquier prefijo.
+3. Abre phpMyAdmin desde la gestión de la base recién creada.
+4. Selecciona esa base e importa juegos_y_puzles_dondominio.sql. Está preparado para importarse dentro de una base existente y no intenta crear una base por su cuenta.
+5. Importa extensiones_web.sql en la misma base. Añade direcciones_pedido, que no existe en el esquema original.
 
-No se requiere inicio de sesión. En el checkout deben introducirse datos ficticios. Por ejemplo:
+No habilites el acceso externo para esta web: api.php corre dentro del hosting y se conecta desde allí.
 
-- Nombre: `Ada Lovelace`
-- Correo: `ada@ejemplo.es`
-- Dirección: `C/ Ejemplo, 42`
-- Código postal: `28001`
-- Ciudad: `Madrid`
-- Promoción opcional: `YUZU10` (aplica un 10% de descuento simulado)
+## Configurar las credenciales
 
-## Flujo funcional demostrable
+1. Copia config.example.php con el nombre config.local.php.
+2. En config.local.php sustituye HOST_DE_LA_BASE_DE_DATOS, NOMBRE_DE_LA_BASE, USUARIO_DE_LA_BASE y CONTRASENA_DE_LA_BASE por los valores del panel.
+3. Sube config.local.php al mismo directorio que api.php. El archivo está excluido de Git y .htaccess bloquea su descarga directa. No publiques la contraseña en GitHub ni la envíes por chat.
 
-1. Navegar o filtrar el catálogo de 12 referencias por categoría, jugadores y dificultad.
-2. Abrir una ficha: genera `product.viewed`.
-3. Añadir productos al carrito: genera `cart.item_added`.
-4. Abrir el checkout: genera `checkout.started`; se calcula IVA al 21%, transporte gratuito a partir de 70 EUR y el descuento de prueba.
-5. Completar el formulario: se valida la entrada, se crea un pedido único, se simula un pago y se registra la secuencia de estados `Creado` → `Pago simulado` → `Pendiente de preparación`.
-6. Abrir “Panel de evidencias” para consultar pedidos y eventos o exportar estos últimos a JSON.
-7. Usar el formulario de soporte para registrar `support.requested`.
+## Subir la web
 
-## Persistencia y modelo de datos
+1. Consulta los datos FTP en el panel de DonDominio o usa WebFTP.
+2. Sube index.html, app.js, styles.css, api.php, config.local.php y .htaccess al directorio public del hosting.
+3. No subas los archivos SQL al directorio público.
+4. Confirma que el dominio apunta a ese hosting y abre la web mediante HTTPS.
 
-Como se trata de una entrega estática, la persistencia se implementa con `localStorage` del navegador. Esto asegura que los pedidos, carrito, incidencias y eventos no desaparezcan al recargar en el mismo navegador; no se envía información a ningún servidor.
+La página necesita que el servidor ejecute PHP; no funcionará como sitio estático. Si no carga el catálogo, revisa config.local.php, confirma que los dos SQL se importaron en la misma base y consulta el registro de errores PHP del hosting. La configuración no se puede completar hasta tener los valores de conexión que muestra el panel.
 
-| Entidad | Campos principales | Relación |
-| --- | --- | --- |
-| Producto | id, título, categoría, jugadores, dificultad, precio, origen | catálogo maestro en `app.js` |
-| Carrito | productId, quantity | referencia a Producto |
-| Pedido | id, fecha, cliente de prueba, líneas, totales, estado, historial de estados | agrupa líneas y pago |
-| Línea de pedido | productId, título, precio unitario, cantidad | pertenece a Pedido |
-| Pago simulado | método, estado, referencia | embebido en un Pedido |
-| Evento | id, tipo, fecha, fuente, payload | evidencia trazable de negocio |
-| Soporte | id, fecha, correo ficticio, mensaje, estado | solicitud postventa |
+## Qué guarda la aplicación
 
-## Instrumentación de eventos
+- El catálogo activo, las categorías, los países de origen, precios, dificultad, jugadores y existencias se leen de la base.
+- El carrito conserva sus cantidades en el navegador; al confirmar, el servidor vuelve a validar stock y precios.
+- El checkout calcula en PHP el IVA del 21 %, el envío simulado de 6,90 EUR para pedidos inferiores a 70 EUR y el descuento YUZU10 del 10 %.
+- El pedido, las líneas, la dirección, el pago de prueba, la reducción de stock y los eventos se guardan en una transacción. Si ocurre un error, no queda un pedido incompleto.
+- El formulario de soporte crea una incidencia y guarda un evento.
+- El back-office consulta pedidos, incidencias y eventos de la base, y permite exportar los eventos a JSON.
+- Las fichas de producto, el carrito y el checkout generan eventos de negocio.
 
-Los eventos se generan en `logEvent()` y se conservan en `pangeaMeeple.events.v1`. Cada registro lleva un identificador, marca temporal ISO, origen y payload. El panel interno ofrece la consulta y una exportación JSON, de forma que en una segunda tarea podría consumirse desde un endpoint de integración, una cola, un ETL a un ERP/CRM o un sistema de analítica.
+## Límites de esta demostración
 
-Eventos incluidos: `product.viewed`, `cart.item_added`, `checkout.started`, `order.created`, `payment.simulated` y `support.requested`.
+- Introduce solo datos ficticios. No se realizan ventas, pagos ni envíos reales.
+- El back-office no tiene autenticación. No guardes datos reales ni expongas información real de clientes.
+- No incluye inicio de sesión de clientes ni gestión de pedidos enviados, cancelados o devueltos.
+- El volcado original incluye usuarios y operaciones de ejemplo. Mantén los SQL fuera del directorio público; .htaccess bloquea el acceso directo si alguno se sube por error.
+- El grupo debe revisar y comprender el código, registrar los cambios, comprobar el flujo completo y completar la declaración de uso de IA que pide el enunciado.
 
-## Arquitectura y decisiones
+## Archivos
 
-- **Interfaz:** `index.html` contiene las vistas semánticas y accesibles; `styles.css` el diseño responsive; `app.js` el comportamiento.
-- **Lógica de negocio:** funciones independientes para filtros, cálculo comercial, validación, creación del pedido, pago simulado e instrumentación.
-- **Persistencia:** una capa mínima con `readStorage()` y `persist()` encapsula `localStorage`.
-- **Alternativas consideradas:** un backend Node/Express con SQLite permitiría usuarios, persistencia compartida, autenticación y una API real. Para un prototipo desplegable sin infraestructura se ha priorizado HTML/CSS/JS y almacenamiento local.
-
-## Limitaciones conocidas
-
-- La persistencia es por navegador: no existe base de datos compartida ni autenticación.
-- Los datos de cliente se usan solo como demostración local y nunca deben ser reales.
-- El pago, transporte y disponibilidad se simulan; no hay comunicación con pasarela, proveedor ni inventario.
-- Para el despliegue público solicitado por el enunciado debe publicarse esta carpeta en un proveedor de hosting elegido por el grupo y sustituir la URL en la entrega.
-
-## Declaración de punto de partida y uso de IA
-
-Punto de partida: desarrollo nuevo, sin plantilla ni repositorio de terceros. La interfaz, datos ficticios y código se crearon como apoyo de IA generativa y requieren revisión, pruebas y comprensión del grupo antes de una entrega académica.
-
-Para el anexo de IA de la memoria, el grupo debe completar con honestidad: herramienta utilizada, tareas asistidas, fragmentos relevantes, errores detectados, cambios introducidos por el equipo y método de validación. Una recomendación de validación: probar manualmente el flujo completo, comprobar las entradas invalidadas, recargar el navegador para verificar persistencia y contrastar los eventos con los pedidos creados.
+- index.html y styles.css: interfaz.
+- app.js: catálogo, filtros, carrito, checkout y panel.
+- api.php: API PHP, validaciones, reglas de negocio y transacciones de base de datos.
+- juegos_y_puzles.sql: volcado original proporcionado.
+- juegos_y_puzles_dondominio.sql: copia preparada para importar en una base existente del hosting.
+- extensiones_web.sql: tabla adicional para direcciones de entrega.
+- config.example.php: plantilla de conexión.
+- config.local.php: credenciales del hosting; no se incluye en Git.

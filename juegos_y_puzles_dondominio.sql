@@ -2,9 +2,9 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Servidor: 127.0.0.1
+-- Servidor: importar desde phpMyAdmin del hosting DonDominio
 -- Tiempo de generación: 22-09-2026 a las 18:40:59
--- Versión del servidor: 10.4.32-MariaDB
+-- Volcado de datos compatible con MySQL, adaptado para importarse en DonDominio
 -- Versión de PHP: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -18,10 +18,8 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Base de datos: `juegos_y_puzles`
+-- Base de datos: seleccionada en el panel de DonDominio
 --
-CREATE DATABASE IF NOT EXISTS `juegos_y_puzles` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `juegos_y_puzles`;
 
 -- --------------------------------------------------------
 
@@ -517,3 +515,4 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
