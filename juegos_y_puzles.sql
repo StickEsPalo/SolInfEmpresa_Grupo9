@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 22-09-2026 a las 18:40:59
+-- Tiempo de generación: 24-09-2026 a las 11:18:36
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.0.30
 
@@ -45,6 +45,19 @@ INSERT INTO `categorias` (`id`, `nombre`, `descripcion`) VALUES
 (3, 'Cooperativo', 'Juegos en los que los jugadores colaboran.'),
 (4, 'Puzzle', 'Rompecabezas y puzzles de diferentes dificultades.'),
 (5, 'Logicos\r\n', 'Juegos basados principalmente en lógica y patrones.');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `direcciones_pedido`
+--
+
+CREATE TABLE `direcciones_pedido` (
+  `pedido_id` int(10) UNSIGNED NOT NULL,
+  `direccion` varchar(255) NOT NULL,
+  `codigo_postal` char(5) NOT NULL,
+  `ciudad` varchar(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -327,6 +340,12 @@ ALTER TABLE `categorias`
   ADD UNIQUE KEY `nombre` (`nombre`);
 
 --
+-- Indices de la tabla `direcciones_pedido`
+--
+ALTER TABLE `direcciones_pedido`
+  ADD PRIMARY KEY (`pedido_id`);
+
+--
 -- Indices de la tabla `eventos`
 --
 ALTER TABLE `eventos`
@@ -463,6 +482,12 @@ ALTER TABLE `usuarios`
 --
 -- Restricciones para tablas volcadas
 --
+
+--
+-- Filtros para la tabla `direcciones_pedido`
+--
+ALTER TABLE `direcciones_pedido`
+  ADD CONSTRAINT `direcciones_pedido_ibfk_1` FOREIGN KEY (`pedido_id`) REFERENCES `pedidos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `eventos`
