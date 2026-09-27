@@ -333,6 +333,11 @@ document.addEventListener("click", event => {
   if (!target) return;
   const { action, id, change, adminTab } = target.dataset;
   if (adminTab) { selectAdminTab(adminTab); return; }
+  if (action === "toggle-mobile-menu") {
+  const menu = document.querySelector("#mobile-menu");
+  const open = menu.classList.toggle("is-open");
+  target.setAttribute("aria-expanded", String(open));
+  }
   if (action === "open-cart") openCart();
   if (action === "close-cart" || action === "close-overlays") closeCart();
   if (action === "add-cart") { addToCart(id); if (refs.productDialog.open) closeDialog(refs.productDialog); }
@@ -357,6 +362,14 @@ document.addEventListener("click", event => {
   }
   if (action === "export-events") exportEvents();
   if (action === "clear-events") clearEvents();
+});
+
+document.querySelectorAll("#mobile-menu a").forEach(link => {
+  link.addEventListener("click", () => {
+    document.querySelector("#mobile-menu").classList.remove("is-open");
+    document.querySelector(".mobile-menu-toggle")
+      .setAttribute("aria-expanded", "false");
+  });
 });
 
 document.querySelector("#search-input").addEventListener("input", event => { state.filters.search = event.target.value; renderCatalog(); });

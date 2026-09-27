@@ -27,10 +27,28 @@
         <a href="#como-funciona">Cómo funciona</a>
         <a href="#trazabilidad">Trazabilidad</a>
       </nav>
+
+      <button
+        class="mobile-menu-toggle"
+        type="button"
+        data-action="toggle-mobile-menu"
+        aria-label="Abrir menú"
+        aria-expanded="false">
+        ☰
+      </button>
+      
       <button class="cart-button" type="button" data-action="open-cart" aria-label="Abrir carrito">
         <span aria-hidden="true">◒</span> Carrito <b id="cart-count">0</b>
       </button>
     </header>
+
+      <nav class="mobile-menu" id="mobile-menu" aria-label="Navegación móvil">
+        <a href="#inicio">Inicio</a>
+        <a href="#catalogo">Catálogo</a>
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#trazabilidad">Trazabilidad</a>
+        <a href="#support-title">Soporte</a>
+      </nav>
 
     <main>
       <section class="hero" id="inicio" aria-labelledby="hero-title">
