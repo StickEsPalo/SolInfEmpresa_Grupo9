@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Pangea Meeple, prototipo académico de eCommerce de juegos de mesa y puzzles de importación.">
+  <title>Pangea Meeple - Juegos de importación</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div data-component="./components/header.html"></div>
+  <main>
+    <div data-component="./components/hero.html"></div>
+    <div data-component="./components/trust.html"></div>
+    <div data-component="./components/catalog.html"></div>
+    <div data-component="./components/experience.html"></div>
+    <div data-component="./components/traceability.html"></div>
+    <div data-component="./components/support.html"></div>
+  </main>
+  <div data-component="./components/footer.html"></div>
+  <div data-component="./components/cart.html"></div>
+  <div data-component="./components/dialogs.html"></div>
+
+  <script type="module">
+    async function loadComponent(container) {
+      const path = container.dataset.component;
+
+      const response = await fetch(path);
+
+      if (!response.ok) {
+        throw new Error(`No se pudo cargar ${path}: HTTP ${response.status}`);
+      }
+
+      container.outerHTML = await response.text();
+    }
+
+    function loadScript(path) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+
+        script.src = path;
+
+        script.onload = resolve;
+
+        script.onerror = () => {
+          reject(new Error(`No se pudo cargar ${path}`));
+        };
+
+        document.body.appendChild(script);
+      });
+    }
+
+    async function initializeApplication() {
+      try {
+        const containers = [
+          ...document.querySelectorAll("[data-component]")
+        ];
+
+        await Promise.all(
+          containers.map(loadComponent)
+        );
+
+        await loadScript("./js/data/products.js");
+        await loadScript("./js/utils.js");
+        await loadScript("./js/events.js");
+        await loadScript("./js/catalog.js");
+        await loadScript("./js/cart.js");
+        await loadScript("./js/checkout.js");
+        await loadScript("./js/support.js");
+        await loadScript("./js/admin.js");
+        await loadScript("./app.js");
+
+      } catch (error) {
+        console.error(
+          "Error al cargar la aplicación:",
+          error
+        );
+
+        const message = document.createElement("p");
+
+        message.setAttribute("role", "alert");
+
+        message.textContent =
+          "No se ha podido cargar la página completa. Comprueba los componentes y ejecuta la web desde un servidor.";
+
+        Object.assign(message.style, {
+          maxWidth: "700px",
+          margin: "40px auto",
+          padding: "20px",
+          background: "#ed7658",
+          color: "#17201e",
+          fontFamily: "sans-serif"
+        });
+
+        document.body.appendChild(message);
+      }
+    }
+
+    initializeApplication();
+  </script>
+
+</body>
+</html>
