@@ -47,7 +47,7 @@ function exportEvents() {
 
   link.href = URL.createObjectURL(blob);
 
-  link.download = "pangea-meeple-eventos.json";
+  link.download = "planetaficha-eventos.json";
 
   link.click();
 

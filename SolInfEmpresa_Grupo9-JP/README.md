@@ -1,6 +1,6 @@
-# Pangea Meeple - prototipo de eCommerce de importación
+# PlanetaFicha - prototipo de eCommerce de importación
 
-Pangea Meeple es un prototipo académico de canal digital de venta para un comercio de juegos de mesa y puzzles de diseño europeo y asiático. No hay actividad comercial, pagos reales, cuentas reales ni credenciales en el proyecto.
+PlanetaFicha es un prototipo académico de canal digital de venta para un comercio de juegos de mesa y puzzles de diseño europeo y asiático. No hay actividad comercial, pagos reales, cuentas reales ni credenciales en el proyecto.
 
 ## Puesta en marcha
 
@@ -106,7 +106,7 @@ Como se trata de una entrega estática, la persistencia se implementa con `local
 | Evento | id, tipo, fecha, fuente, payload | evidencia trazable de negocio |
 | Soporte | id, fecha, correo ficticio, mensaje, estado | solicitud postventa |
 
-Claves de `localStorage`: `pangeaMeeple.cart.v1`, `pangeaMeeple.orders.v1`, `pangeaMeeple.events.v1` y `pangeaMeeple.tickets.v1`.
+Claves de `localStorage`: `planetaFicha.cart.v1`, `planetaFicha.orders.v1`, `planetaFicha.events.v1` y `planetaFicha.tickets.v1`.
 
 ### Base de datos relacional (plantilla)
 
@@ -114,7 +114,7 @@ Claves de `localStorage`: `pangeaMeeple.cart.v1`, `pangeaMeeple.orders.v1`, `pan
 
 ## Instrumentación de eventos
 
-Los eventos se generan en `logEvent()` (`js/events.js`) y se conservan en `pangeaMeeple.events.v1`. Cada registro lleva un identificador, marca temporal ISO, origen y payload. El panel interno ofrece la consulta y una exportación JSON, de forma que en una segunda tarea podría consumirse desde un endpoint de integración, una cola, un ETL a un ERP/CRM o un sistema de analítica.
+Los eventos se generan en `logEvent()` (`js/events.js`) y se conservan en `planetaFicha.events.v1`. Cada registro lleva un identificador, marca temporal ISO, origen y payload. El panel interno ofrece la consulta y una exportación JSON, de forma que en una segunda tarea podría consumirse desde un endpoint de integración, una cola, un ETL a un ERP/CRM o un sistema de analítica.
 
 Eventos incluidos: `product.viewed`, `cart.item_added`, `checkout.started`, `order.created`, `payment.simulated` y `support.requested`.
 

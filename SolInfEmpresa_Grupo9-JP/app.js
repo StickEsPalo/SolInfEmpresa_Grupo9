@@ -1,14 +1,14 @@
 /*
- * Pangea Meeple - prototipo académico sin backend.
+ * PlanetaFicha - prototipo académico sin backend.
  * La capa de persistencia usa localStorage para que la demostración pueda
  * desplegarse como sitio estático. Véase README para el modelo y límites.
  */
 
 const STORAGE = {
-  cart: "pangeaMeeple.cart.v1",
-  orders: "pangeaMeeple.orders.v1",
-  events: "pangeaMeeple.events.v1",
-  tickets: "pangeaMeeple.tickets.v1"
+  cart: "planetaFicha.cart.v1",
+  orders: "planetaFicha.orders.v1",
+  events: "planetaFicha.events.v1",
+  tickets: "planetaFicha.tickets.v1"
 };
 
 
