@@ -14,6 +14,7 @@ const products = [
     tone: "#1c1c1c",
     text: "#ffffff",
     symbol: "♔",
+    image: "img/products/ajedrez.jpg",
     description:
       "Un verdadero duelo mental. Controla tus piezas, domina el tablero y atrapa al rey enemigo.",
     mechanics: "movimiento de cuadrícula · abstracción",
@@ -34,6 +35,7 @@ const products = [
     tone: "#2b1b11",
     text: "#f4ecc2",
     symbol: "☖",
+    image: "img/products/shogi.jpg",
     description:
       "El ajedrez japonés. Captura las fichas enemigas y úsalas a tu favor para capturar al rey enemigo.",
     mechanics: "reintroducción de piezas · movimiento de cuadrícula",
@@ -54,6 +56,7 @@ const products = [
     tone: "#13422b",
     text: "#bbf7d0",
     symbol: "☣",
+    image: "img/products/virus.jpg",
     description:
       "Enfréntate a una pandemia erradicando virus mientras boicoteas los órganos de tus rivales para ganar",
     mechanics: "gestión de mano · obstaculizar oponente",
@@ -74,6 +77,7 @@ const products = [
     tone: "#2d1610",
     text: "#fed7aa",
     symbol: "⬡",
+    image: "img/products/catan.jpg",
     description:
       "Coloniza una isla desierta construyendo pueblos y carreteras mediante la gestión y el comercio de recursos.",
     mechanics: "comercio · dados · control de áreas",
@@ -94,6 +98,7 @@ const products = [
     tone: "#1e3a5f",
     text: "#bfdbfe",
     symbol: "⛫",
+    image: "img/products/carcassonne.jpg",
     description:
       "Coloca losetas para dar forma a la región medieval de Carcassonne y puntúa mediante tus seguidores (meeples).",
     mechanics: "colocación de losetas · control de área",
@@ -114,6 +119,7 @@ const products = [
     tone: "#0f172a",
     text: "#93c5fd",
     symbol: "➕︎",
+    image: "img/products/pandemic.jpg",
     description:
       "Trabajad en equipo como médicos especialistas para contener brotes globales y descubrir la cura a cuatro enfermedades.",
     mechanics: "cooperativo · puntos de acción · gestión de mano",
@@ -134,6 +140,7 @@ const products = [
     tone: "#3b0764",
     text: "#f5d0fe",
     symbol: "★",
+    image: "img/products/dixit.jpg",
     description:
       "Usa la imaginación y la sutileza para dar pistas sobre tus cartas y evita que todos las adivinen.",
     mechanics: "voto secreto · narración",
@@ -154,6 +161,7 @@ const products = [
     tone: "#14532d",
     text: "#dcfce7",
     symbol: "𓃭",
+    image: "img/products/dobutsu-shogi.jpg",
     description:
       "Una versión más simplificada del shogi. Con animales como piezas de juego.",
     mechanics: "movimiento de cuadrícula · iniciación",
@@ -174,6 +182,7 @@ const products = [
     tone: "#450a0a",
     text: "#fee2e2",
     symbol: "⛩",
+    image: "img/products/oshi.jpg",
     description:
       "Inspirado en la corte japonesa imperial, empuja las valiosas torres de tu oponente fuera del tablero para ganar",
     mechanics: "empuje de piezas · movimiento de cuadrícula",
@@ -194,6 +203,7 @@ const products = [
     tone: "#4c0519",
     text: "#fecdd3",
     symbol: "⧗",
+    image: "img/products/tragedy-looper.jpg",
     description:
       "Un jugador, la Mente Maestra, crea trágicos bucles temporales, mientras que los demás deducen cómo evitarlos.",
     mechanics: "deducción · bucles temporales",
@@ -214,6 +224,7 @@ const products = [
     tone: "#3b5323",
     text: "#fdfefe",
     symbol: "▼",
+    image: "img/products/kabuto-sumo.jpg",
     description:
       "Una ardua lucha de escarabajos rinoceronte cuyo objetivo es empujar al oponente fuera del ring.",
     mechanics: "empuje de piezas · habilidad",
@@ -234,6 +245,7 @@ const products = [
     tone: "#854d0e",
     text: "#fef9c3",
     symbol: "⛟",
+    image: "img/products/rush-hour.jpg",
     description:
       "Desliza los coches del atasco para abrir camino a tu vehículo hasta la salida. 40 desafíos de dificultad creciente.",
     mechanics: "deslizamiento de piezas · resolución de problemas",

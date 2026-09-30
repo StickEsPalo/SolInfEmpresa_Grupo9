@@ -35,12 +35,14 @@ SolInfEmpresa_Grupo9-JP/
 │   ├── footer.html         Pie de página
 │   ├── cart.html           Panel lateral del carrito
 │   └── dialogs.html        Ficha de producto, checkout, éxito y back-office
+├── img/
+│   └── products/           Fotos de los productos (una por juego, .jpg)
 └── js/
     ├── data/products.js    Catálogo maestro de productos
     ├── utils.js            readStorage(), persist(), safeText(), formatPrice()
     ├── events.js           logEvent(), vista previa, exportación y borrado
     ├── catalog.js          getProduct(), filtrado y renderizado del catálogo
-    ├── cart.js             Carrito, totales y botón flotante
+    ├── cart.js             Carrito, totales, miniaturas y botón flotante
     ├── checkout.js         Checkout, validación y creación del pedido
     ├── support.js          Solicitudes de soporte
     └── admin.js            Back-office (pedidos, eventos y modelo de datos)
@@ -67,8 +69,9 @@ No se requiere inicio de sesión. En el checkout deben introducirse datos fictic
    - **Dificultad:** Iniciación, Media o Experta.
    - **Búsqueda de texto** por título, subtítulo, autor, origen o categoría.
    - En móvil, el panel de filtros se pliega con el botón "Filtros".
-2. Abrir una ficha: genera `product.viewed`.
-3. Añadir productos al carrito: genera `cart.item_added`. El carrito se abre desde la cabecera o desde el **botón flotante**, que aparece cuando el botón de la cabecera sale de pantalla y muestra el mismo contador.
+   - Cada tarjeta muestra la foto del juego; si una imagen falta o no carga, se ve el diseño de color con el símbolo del juego.
+2. Abrir una ficha: genera `product.viewed`. La ficha muestra la foto del juego junto a su título.
+3. Añadir productos al carrito: genera `cart.item_added`. Cada línea del carrito lleva una miniatura con la foto. El carrito se abre desde la cabecera o desde el **botón flotante**, que aparece cuando el botón de la cabecera sale de pantalla y muestra el mismo contador.
 4. Abrir el checkout: genera `checkout.started`; se calcula IVA al 21%, transporte gratuito a partir de 70 EUR y el descuento de prueba.
 5. Completar el formulario: se valida la entrada, se crea un pedido con identificador propio, se simula un pago y se registra la secuencia de estados `Creado` → `Pago simulado` → `Pendiente de preparación`.
 6. Abrir "Panel de evidencias" para consultar pedidos y eventos o exportar estos últimos a JSON.
@@ -91,6 +94,19 @@ Reglas de datos que conviene respetar al añadir productos:
 - `playerFilter` debe ser coherente con `players`: `"solo"` (1 jugador), `"small"` (partidas que admiten 2-3) y `"group"` (partidas que admiten 4 o más). Un juego de 2-4 jugadores lleva `["small", "group"]`.
 - `difficulty` debe ser `Iniciación`, `Media` o `Experta`.
 - Si cambia el número de referencias o de países, actualizar a mano los datos del hero (`components/hero.html`).
+- El campo `image` apunta a la foto del producto con una ruta **relativa a `index.html`** (no a `products.js`), por ejemplo `"img/products/ajedrez.jpg"`. Es opcional: sin él, o si el archivo no carga, el producto conserva el diseño de color con `tone`, `text` y `symbol`, por lo que estos tres campos no deben borrarse.
+
+### Imágenes de productos
+
+Las fotos están en `img/products/`, en formato `.jpg`, con el mismo nombre que el `id` del producto (`ajedrez.jpg`, `rush-hour.jpg`...). Se recomienda que sean cuadradas o casi cuadradas, con fondo blanco, de unos 800×800 px y menos de 150 KB cada una.
+
+Se muestran en tres sitios:
+
+- **Catálogo:** la foto ocupa la parte superior de la tarjeta, centrada y entera sobre fondo blanco (`object-fit: contain`). Debajo, la franja con el color del juego contiene el título y el subtítulo. La etiqueta "Diseño · País" se sitúa sobre la foto.
+- **Ficha de producto:** la foto llena el panel izquierdo y el título permanece abajo, en su recuadro de color.
+- **Carrito:** cada línea lleva una miniatura de 56×56 px con la foto. Si falla, se ve el símbolo sobre fondo de color, como antes.
+
+Si una imagen no carga, un atributo `onerror` la elimina y la tarjeta vuelve al diseño de color, de modo que no se ven imágenes rotas.
 
 ## Persistencia y modelo de datos
 
@@ -98,7 +114,7 @@ Como se trata de una entrega estática, la persistencia se implementa con `local
 
 | Entidad | Campos principales | Relación |
 | --- | --- | --- |
-| Producto | id, title, subtitle, category, players, playerFilter, difficulty, duration, origin, author, price, tone, text, symbol, description, mechanics, language | catálogo maestro en `js/data/products.js` |
+| Producto | id, title, subtitle, category, players, playerFilter, difficulty, duration, origin, author, price, tone, text, symbol, image, description, mechanics, language | catálogo maestro en `js/data/products.js` |
 | Carrito | productId, quantity | referencia a Producto |
 | Pedido | id, fecha, cliente de prueba, líneas, totales, código promocional, estado, historial de estados | agrupa líneas y pago |
 | Línea de pedido | productId, título, precio unitario, cantidad | pertenece a Pedido |
@@ -148,6 +164,9 @@ Desarrollo en un único bloque: `index.html` con todas las vistas, `styles.css`,
 2. **Botón flotante del carrito** (fase 1). Nuevo botón fijo en `components/header.html`, con contador sincronizado con el de la cabecera (`refs.floatingCartCount`). Se muestra cuando el botón de la cabecera sale de pantalla (`IntersectionObserver` en `initFloatingCart()` de `js/cart.js`), respeta el área segura de móviles y `prefers-reduced-motion`.
 3. **Catálogo con productos reales.** Sustitución de los productos de ejemplo por juegos y puzzles reales.
 4. **Revisión completa del código** (fase 3). Comprobación de sintaxis de todos los JS, cruce automático entre HTML, JS, CSS y datos, y revisión manual de la lógica. Los resultados están en la sección "Problemas pendientes".
+5. **Imágenes en el catálogo y en la ficha de producto.** Nueva carpeta `img/products/` con una foto por juego y campo `image` en `products.js`. `renderCatalog()` (`js/catalog.js`) y `openProduct()` (`app.js`) insertan la foto con un `<img>`. En el catálogo se rediseña la tarjeta: foto sobre fondo blanco arriba y título y subtítulo dentro de la franja de color de debajo, con los botones alineados en todas las tarjetas de una fila. En la ficha, la foto ocupa el panel izquierdo con el título en su recuadro de color. Los estilos usan las clases `has-image`.
+6. **Miniatura de imagen en el carrito.** Cada línea del carrito (`renderCart()` en `js/cart.js`) muestra la foto del producto en un recuadro de 56×56 px, con el símbolo de color como alternativa si la foto falla. La imagen es decorativa (`alt=""`), porque el título aparece al lado.
+7. **Aviso de prototipo más visible.** La franja superior "Prototipo académico" (`.prototype-strip`) aumenta de tamaño: texto de 11 a 14 px, altura mínima de 32 a 44 px, más espacio interior y un punto indicador mayor. En móvil, el texto pasa de 9 a 11 px.
 
 ## Declaración de punto de partida y uso de IA
 
@@ -159,10 +178,10 @@ Para el anexo de IA de la memoria, el grupo debe completar con honestidad: herra
 
 Este registro recoge únicamente lo tratado en las sesiones de revisión y corrección de las fases 1 a 3. El grupo debe completarlo con las tareas de la versión inicial y de la modularización, que no figuran aquí en detalle.
 
-- **Tareas asistidas:** botón flotante del carrito (fase 1); diagnóstico y corrección del filtrado del catálogo (fase 2); revisión completa del código y elaboración de la lista de problemas; actualización de este README.
+- **Tareas asistidas:** botón flotante del carrito (fase 1); diagnóstico y corrección del filtrado del catálogo (fase 2); revisión completa del código y elaboración de la lista de problemas; integración de las imágenes de producto (tarjeta del catálogo, ficha y miniatura del carrito); ampliación del aviso de prototipo; actualización de este README.
 - **Errores detectados por la IA:** filtro "1 jugador" sin ningún producto; erratas en los datos; y los problemas listados en "Problemas pendientes".
-- **Cambios introducidos por el equipo:** integración de los productos reales, decisiones sobre categorías, corrección de tildes y actualización del hero.
-- **Método de validación empleado:** comprobación automática de sintaxis de los JS, cruce entre archivos (IDs, selectores, acciones, clases CSS) y simulación de los filtros contra los datos de `products.js`. **Pendiente:** validación manual en navegador (ver apartado E).
+- **Cambios introducidos por el equipo:** integración de los productos reales, decisiones sobre categorías, corrección de tildes, actualización del hero y descarga y preparación de las fotos de los productos (formato, nombre y carpeta).
+- **Método de validación empleado:** comprobación automática de sintaxis de los JS, cruce entre archivos (IDs, selectores, acciones, clases CSS) y simulación de los filtros contra los datos de `products.js`. Las maquetas de la ficha y de la miniatura del carrito se comprobaron en un navegador (Chromium) con una foto de ejemplo, y después el equipo las verificó en la web real. **Pendiente:** validación manual en navegador (ver apartado E).
 
 ## Problemas pendientes
 
@@ -216,3 +235,4 @@ Resultado de la revisión de la fase 3. Marcar cada punto con `[x]` cuando se re
 
 - [ ] Probar en navegador cada filtro (categoría, jugadores, dificultad y búsqueda), el flujo completo de compra, la persistencia tras recargar y la vista móvil.
 - [ ] Completar el anexo de IA de la memoria (ver sección "Declaración de punto de partida y uso de IA").
+- [ ] Anotar en la memoria la procedencia y licencia de las fotos de `img/products/` (las portadas de juegos suelen tener derechos de autor; al ser un prototipo sin fines comerciales, basta con citar la fuente).

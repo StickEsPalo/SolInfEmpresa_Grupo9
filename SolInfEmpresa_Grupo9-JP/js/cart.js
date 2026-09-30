@@ -112,6 +112,16 @@ function renderCart() {
           style="--tone:${product.tone};--image-text:${product.text}"
         >
           ${safeText(product.symbol)}
+          ${
+            product.image
+              ? `<img
+                  src="${safeText(product.image)}"
+                  alt=""
+                  loading="lazy"
+                  onerror="this.remove()"
+                >`
+              : ""
+          }
         </div>
 
         <div>

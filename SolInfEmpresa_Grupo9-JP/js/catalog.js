@@ -51,15 +51,28 @@ function renderCatalog() {
       .map(product => `
     <article class="product-card">
       <div
-        class="product-image"
+        class="product-image${product.image ? " has-image" : ""}"
         style="--tone:${product.tone};--image-text:${product.text}"
         data-symbol="${safeText(product.symbol)}"
       >
+        ${
+          product.image
+            ? `<img
+                src="${safeText(product.image)}"
+                alt="Caja del juego ${safeText(product.title)}"
+                width="400"
+                height="400"
+                loading="lazy"
+                onerror="this.parentElement.classList.remove('has-image'); this.remove()"
+              >`
+            : ""
+        }
+
         <span class="product-origin">
           Diseño · ${safeText(product.origin)}
         </span>
 
-        <h3>
+        <h3 class="product-title">
           ${safeText(product.title)}
           <small>
             ${safeText(product.subtitle)}

@@ -54,7 +54,7 @@ function openProduct(productId) {
   if (!product) return;
   logEvent("product.viewed", { productId, productName: product.title });
   refs.productDialog.innerHTML = `<div>
-    <div class="dialog-product-image" style="--tone:${product.tone};--image-text:${product.text}"><span>Diseño · ${safeText(product.origin)}</span><strong>${safeText(product.title)}</strong></div>
+    <div class="dialog-product-image${product.image ? " has-image" : ""}" style="--tone:${product.tone};--image-text:${product.text}">${product.image ? `<img src="${safeText(product.image)}" alt="Caja del juego ${safeText(product.title)}" onerror="this.parentElement.classList.remove('has-image'); this.remove()">` : ""}<span>Diseño · ${safeText(product.origin)}</span><strong>${safeText(product.title)}</strong></div>
     <div class="dialog-product-content"><div class="dialog-header"><div><p class="eyebrow">${safeText(product.category)} · ${safeText(product.difficulty)}</p><h2 id="product-dialog-title">${safeText(product.title)}</h2></div><button class="icon-button" type="button" data-action="close-product" aria-label="Cerrar ficha">×</button></div>
       <p class="detail-lead">${safeText(product.description)}</p>
       <dl class="detail-meta"><div><dt>Jugadores</dt><dd>${safeText(product.players)}</dd></div><div><dt>Duración</dt><dd>${safeText(product.duration)}</dd></div><div><dt>Autoría</dt><dd>${safeText(product.author)}</dd></div><div><dt>Idioma</dt><dd>${safeText(product.language)}</dd></div><div><dt>Mecánicas</dt><dd>${safeText(product.mechanics)}</dd></div><div><dt>Disponibilidad</dt><dd>Catálogo permanente</dd></div></dl>

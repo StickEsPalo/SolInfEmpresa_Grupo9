@@ -221,18 +221,18 @@ h2 em {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
-  min-height: 32px;
-  padding: 6px 16px;
+  gap: 12px /* 9px */;
+  min-height: 44px /* 32px */;
+  padding: 10px /* 6px */ 16px;
   background: var(--ink);
   color: var(--paper);
-  font: 500 11px/1 var(--mono);
+  font: 500 14px/1.4 /* 11px/1 */ var(--mono);
   letter-spacing: 0.08em;
   text-align: center;
 }
 .pulse-dot {
-  width: 7px;
-  height: 7px;
+  width: 9px /* 7px */;
+  height: 9px /* 7px*/ ;
   background: var(--coral);
   border-radius: 50%;
   box-shadow: 0 0 0 4px rgba(237, 118, 88, 0.18);
@@ -459,6 +459,30 @@ h2 em {
   color: var(--image-text);
   font: 600 19px var(--serif);
 }
+
+/* MINIATURA DEL CARRITO CON IMAGEN */
+.cart-item {
+  grid-template-columns: 56px 1fr auto;
+}
+.cart-item-thumb {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+}
+.cart-item-thumb img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  box-sizing: border-box;
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid var(--line);
+}
+
 .cart-item h3 {
   margin: 0 0 2px;
   font: 600 16px var(--serif);
@@ -999,6 +1023,64 @@ h2 em {
   color: var(--ink);
   border-color: var(--coral);
 }
+
+/* ======= TARJETA CON IMAGEN: IMAGEN SOBRE FONDO BLANCO + ZONA DE COLOR CON EL TEXTO ======= */
+.product-card {
+  display: flex;
+  flex-direction: column;
+}
+.product-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.card-actions {
+  margin-top: auto;
+}
+
+/* CONTENEDOR: LA IMAGEN ARRIBA Y EL TEXTO DEBAJO (EN COLUMNA) */
+.product-image.has-image {
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 0;
+  padding: 0;
+}
+/* QUITAMOS LOS ADORNOS DE ANTES (CIRCULO Y SIMBOLO), QUE SOBRE BLANCO NO SE VEN */
+.product-image.has-image::before,
+.product-image.has-image::after {
+  display: none;
+}
+
+/* LA FOTO: ZONA BLANCA RECTANGULAR, CON LA IMAGEN CENTRADA Y ENTERA */
+.product-image.has-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  padding: 10px;
+  box-sizing: border-box;
+  object-fit: contain;
+  background: #fff;
+}
+
+/* LA ETIQUETA "DISEÑO · PAIS" CON FONDO DEL COLOR DEL JUEGO, PARA QUE SE LEA SOBRE EL BLANCO */
+.product-image.has-image .product-origin {
+  top: 12px;
+  right: 12px;
+  background: var(--tone);
+}
+
+/* EL TITULO Y SUBTITULO DENTRO DE LA ZONA DE COLOR, CON ALTURA MINIMA IGUAL EN TODAS */
+.product-image.has-image h3 {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: none;
+  min-height: 108px;
+  padding: 16px 18px;
+  box-sizing: border-box;
+}
+
 .empty-state {
   padding: 50px;
   background: var(--paper-deep);
@@ -1271,6 +1353,55 @@ h2 em {
   font: 600 59px/0.9 var(--serif);
   letter-spacing: -0.07em;
 }
+/* FICHA CON IMAGEN */
+.dialog-product-image.has-image {
+  position: relative;
+  padding: 0;
+}
+
+/* LA FOTO OCUPA EL ESPACIO LIBRE DEL PANEL */
+.dialog-product-image.has-image img {
+  display: block;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+  object-fit: contain;
+  background: #fff;
+}
+.dialog-product-image.has-image > span {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 1;
+  background: var(--tone);
+}
+.dialog-product-image.has-image strong {
+  flex: none;
+  width: 100%;
+  max-width: none;
+  padding: 22px 28px 26px;
+  box-sizing: border-box;
+  font-size: 46px;
+}
+
+/* EN MOVIL EL PANEL ES MAS BAJO */
+@media (max-width: 800px) {
+  .dialog-product-image.has-image {
+    min-height: 0;
+  }
+  .dialog-product-image.has-image img {
+    flex: none;
+    aspect-ratio: 4 / 3;
+  }
+  .dialog-product-image.has-image strong {
+    font-size: 36px;
+    padding: 16px 20px 20px;
+  }
+}
+
+
 .dialog-product-content {
   padding: 36px;
 }
@@ -1798,7 +1929,7 @@ h2 em {
 /*==========================================================================*/
 @media (max-width: 430px) {
   .prototype-strip {
-    font-size: 9px;
+    font-size: 11px /* 9px */;
   }
   .cart-button {
     padding: 9px;
