@@ -125,7 +125,7 @@ Si una imagen no carga, un atributo `onerror` la elimina y la tarjeta vuelve al 
 
 ## Persistencia y modelo de datos
 
-El carrito, los pedidos visibles en el back-office, incidencias y eventos se conservan en `localStorage` de ese navegador. Al confirmar un pedido, sus datos también se envían a `enviar-pedido.php`, que manda un correo al buzón corporativo; el servidor no guarda la orden ni requiere base de datos.
+El carrito se conserva en la cookie funcional propia `planetaFicha_cart` durante 30 días y también en `localStorage` como respaldo; al iniciar, la web migra a la cookie el carrito anterior que encuentre en `localStorage`. Esta cookie contiene solo los identificadores de producto y cantidades, con `Path=/` y `SameSite=Lax` (y `Secure` bajo HTTPS). Los pedidos visibles en el back-office, incidencias y eventos siguen en `localStorage` de ese navegador. Al confirmar un pedido, sus datos también se envían a `enviar-pedido.php`, que manda un correo al buzón corporativo; el servidor no guarda la orden ni requiere base de datos.
 
 | Entidad | Campos principales | Relación |
 | --- | --- | --- |
@@ -137,7 +137,7 @@ El carrito, los pedidos visibles en el back-office, incidencias y eventos se con
 | Evento | id, tipo, fecha, fuente, payload | evidencia trazable de negocio |
 | Soporte | id, fecha, correo ficticio, mensaje, estado | solicitud postventa |
 
-Claves de `localStorage`: `planetaFicha.cart.v1`, `planetaFicha.orders.v1`, `planetaFicha.events.v1` y `planetaFicha.tickets.v1`.
+Claves de `localStorage`: `planetaFicha.cart.v1` (respaldo), `planetaFicha.orders.v1`, `planetaFicha.events.v1` y `planetaFicha.tickets.v1`.
 
 ### Base de datos relacional (plantilla)
 
