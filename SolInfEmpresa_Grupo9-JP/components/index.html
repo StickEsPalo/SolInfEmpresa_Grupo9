@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap">
-  <link rel="stylesheet" href="./styles.css?v=20261001-4">    <!-- CADA VEZ QUE SE MODIFIQUE EL CSS O ALGUN .JS, ES NECESARIO MODIFICAR LA VERSION DE ESTE CAMPO (EJ: ./styles.css?v=20261001-3 SE MODIFICA A  ./styles.css?v=20261001-4) -->
+  <link rel="stylesheet" href="./styles.css?v=20261002-1">    <!-- CADA VEZ QUE SE MODIFIQUE EL CSS O ALGUN .JS, ES NECESARIO MODIFICAR LA VERSION DE ESTE CAMPO (EJ: ./styles.css?v=20261001-3 SE MODIFICA A  ./styles.css?v=20261002-1) -->
 </head>
 <body>
   <div data-component="./components/header.html"></div>
@@ -26,7 +26,7 @@
 
   <!-- AL IGUAL QUE CON ./STYLE.CSS (LINEA 11), ES NECESARIO MODIFICAR EL VALOR DEL "ASSET_VERSION". TANTO LA VERSION DEL STYLES.CSS COMO ASSET_VERSION DEVEN SER EL MISMO. -->
   <script>
-    const ASSET_VERSION = "20261001-4";   
+    const ASSET_VERSION = "20261002-1";   
     async function loadComponent(container) {
       const path = container.dataset.component;
 
@@ -70,6 +70,7 @@
         await loadScript("./js/events.js");
         await loadScript("./js/catalog.js");
         await loadScript("./js/cart.js");
+        await loadScript("./js/payment.js");
         await loadScript("./js/checkout.js");
         await loadScript("./js/support.js");
         await loadScript("./js/admin.js");

@@ -19,6 +19,35 @@ const products = [
       "Un verdadero duelo mental. Controla tus piezas, domina el tablero y atrapa al rey enemigo.",
     mechanics: "movimiento de cuadrícula · abstracción",
     language: "Sin dependencia",
+
+    variants: [
+      {
+        id: "ajedrez-430",
+        title: "Ajedrez",
+        subtitle: "Edición caballeros templarios",
+        image: "img/products/ajedrez-430.jpg",
+        price: 430.0,
+        description: "Juega al ajedrez al más estilo medieval. Guia a tus caballeros templarios y álzate victorioso en esta cruzada.",
+        players: "2",
+        duartion: "5-1200 min",
+        author: "Tradicional",
+        language: "Sin dependencia",
+        mechanics: "movimiento de cuadrícula · abstracción"
+      },
+      {
+        id: "ajedrez-17500",
+        title: "Ajedrez",
+        subtitle: "Edición premium",
+        image: "img/products/ajedrez-17500.jpg",
+        price: 17500.0,
+        description: "Juega al ajedrez y disfruta de un tablero y piezas de la más alta gama. Tan solo prepara tu riñón para comprarlo...",
+        players: "2",
+        duartion: "5-1200 min",
+        author: "Tradicional",
+        language: "Sin dependencia",
+        mechanics: "movimiento de cuadrícula · abstracción"
+      },
+    ],
   },
   {
     id: "shogi",
@@ -82,6 +111,35 @@ const products = [
       "Coloniza una isla desierta construyendo pueblos y carreteras mediante la gestión y el comercio de recursos.",
     mechanics: "comercio · dados · control de áreas",
     language: "Español",
+
+    variants: [
+      {
+        id: "catan-navegantes",
+        title: "Catan",
+        subtitle: "Expansion navegantes",
+        image: "img/products/catan-navegantes.jpg",
+        price: 46.0,
+        description: "Juega y disfruta de esta expansion navegantes de catan.",
+        players: "3-4",
+        duartion: "60-90 min",
+        author: "Klau Teuber",
+        language: "Español",
+        mechanics: "comercio · dados · control de áreas"
+      },
+      {
+        id: "catan-piratas-y-exploradores",
+        title: "Catan",
+        subtitle: "Expansión piratas y exploradores",
+        image: "img/products/catan-piratas-y-exploradores.jpg",
+        price: 46.0,
+        description: "Juega y disfruta de esta expansion piratas y exploradores de catan.",
+        players: "3-4",
+        duartion: "60-90 min",
+        author: "Klaus Teuber",
+        language: "Español",
+        mechanics: "comercio · dados · control de áreas"
+      },
+    ],
   },
   {
     id: "carcassonne",

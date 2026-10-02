@@ -49,18 +49,32 @@ function showToast(message) {
   showToast.timeout = setTimeout(() => refs.toast.classList.remove("is-visible"), 2600);
 }
 
-function openProduct(productId) {
-  const product = getProduct(productId);
-  if (!product) return;
-  logEvent("product.viewed", { productId, productName: product.title });
+function openProduct(productId, index = 0) {
+  const parent = products.find(product => product.id === productId);
+  if (!parent) return;
+
+  const versions = getVariants(parent);
+  const total = versions.length;
+  index = (index + total) % total; // da la vuelta: tras la última, vuelve a la primera
+  const product = versions[index];
+
+  logEvent("product.viewed", { productId: product.id, productName: product.title });
+
+  const variantNav = total > 1 ? `<div class="variant-nav">
+      <button class="variant-arrow" type="button" data-action="show-variant" data-id="${parent.id}" data-index="${index - 1}" aria-label="Variante anterior">‹</button>
+      <div class="variant-dots">${versions.map((_, i) => `<button class="variant-dot${i === index ? " is-active" : ""}" type="button" data-action="show-variant" data-id="${parent.id}" data-index="${i}" aria-label="Ver variante ${i + 1} de ${total}"${i === index ? ' aria-current="true"' : ""}></button>`).join("")}</div>
+      <button class="variant-arrow" type="button" data-action="show-variant" data-id="${parent.id}" data-index="${index + 1}" aria-label="Variante siguiente">›</button>
+    </div>` : "";
+
   refs.productDialog.innerHTML = `<div>
-    <div class="dialog-product-image${product.image ? " has-image" : ""}" style="--tone:${product.tone};--image-text:${product.text}">${product.image ? `<img src="${safeText(product.image)}" alt="Caja del juego ${safeText(product.title)}" onerror="this.parentElement.classList.remove('has-image'); this.remove()">` : ""}<span>Diseño · ${safeText(product.origin)}</span><strong>${safeText(product.title)}</strong></div>
+    <div class="dialog-product-image${product.image ? " has-image" : ""}" style="--tone:${product.tone};--image-text:${product.text}">${product.image ? `<img src="${safeText(product.image)}" alt="Caja del juego ${safeText(product.title)}" onerror="this.parentElement.classList.remove('has-image'); this.remove()">` : ""}<span>Diseño · ${safeText(product.origin)}</span>${variantNav}<strong>${safeText(product.title)}</strong></div>
     <div class="dialog-product-content"><div class="dialog-header"><div><p class="eyebrow">${safeText(product.category)} · ${safeText(product.difficulty)}</p><h2 id="product-dialog-title">${safeText(product.title)}</h2></div><button class="icon-button" type="button" data-action="close-product" aria-label="Cerrar ficha">×</button></div>
       <p class="detail-lead">${safeText(product.description)}</p>
       <dl class="detail-meta"><div><dt>Jugadores</dt><dd>${safeText(product.players)}</dd></div><div><dt>Duración</dt><dd>${safeText(product.duration)}</dd></div><div><dt>Autoría</dt><dd>${safeText(product.author)}</dd></div><div><dt>Idioma</dt><dd>${safeText(product.language)}</dd></div><div><dt>Mecánicas</dt><dd>${safeText(product.mechanics)}</dd></div><div><dt>Disponibilidad</dt><dd>Catálogo permanente</dd></div></dl>
       <div class="dialog-product-price"><b>${formatPrice(product.price)}</b><button class="button button-primary" type="button" data-action="add-cart" data-id="${product.id}">Añadir al carrito <span>+</span></button></div>
     </div></div>`;
-  refs.productDialog.showModal();
+
+  if (!refs.productDialog.open) refs.productDialog.showModal();
 }
 
 function closeDialog(dialog) { if (dialog.open) dialog.close(); }
@@ -68,7 +82,7 @@ function closeDialog(dialog) { if (dialog.open) dialog.close(); }
 document.addEventListener("click", event => {
   const target = event.target.closest("[data-action], [data-admin-tab]");
   if (!target) return;
-  const { action, id, change, adminTab } = target.dataset;
+  const { action, id, change, adminTab, index } = target.dataset;
   if (adminTab) { selectAdminTab(adminTab); return; }
   if (action === "toggle-mobile-menu") {
   const menu = document.querySelector("#mobile-menu");
@@ -80,6 +94,7 @@ document.addEventListener("click", event => {
   if (action === "add-cart") { addToCart(id); if (refs.productDialog.open) closeDialog(refs.productDialog); }
   if (action === "change-quantity") changeQuantity(id, change);
   if (action === "view-product") openProduct(id);
+  if (action === "show-variant") openProduct(id, Number(index));
   if (action === "close-product") closeDialog(refs.productDialog);
   if (action === "start-checkout") openCheckout();
   if (action === "close-checkout") closeDialog(refs.checkoutDialog);
