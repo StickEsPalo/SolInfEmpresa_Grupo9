@@ -1,0 +1,16 @@
+<section class="section section-support" id="soporte" aria-labelledby="support-title">
+  <div class="section-intro">
+    <p class="eyebrow">Soporte</p>
+    <h2 id="support-title">¿Tienes una incidencia?</h2>
+    <p>Registra una solicitud desde tu cuenta. Quedará vinculada al usuario en la base de datos.</p>
+  </div>
+  <form id="support-form" class="support-form" novalidate>
+    <div class="form-grid">
+      <label>Asunto<input name="supportSubject" required minlength="3" maxlength="150" placeholder="Consulta sobre mi pedido"></label>
+      <label class="full-width">Descripción<textarea name="supportMessage" required minlength="10" maxlength="5000" placeholder="Describe la incidencia..."></textarea></label>
+    </div>
+    <input name="website" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-10000px">
+    <p class="form-error" id="support-feedback" role="alert"></p>
+    <button class="button button-primary" type="submit">Enviar incidencia <span>→</span></button>
+  </form>
+</section>
