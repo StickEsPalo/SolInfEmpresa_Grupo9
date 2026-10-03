@@ -3,7 +3,7 @@
   <div class="dialog-header"><div><p class="eyebrow">Paso final</p><h2 id="checkout-title">Checkout de prueba</h2></div><button class="icon-button" type="button" data-action="close-checkout" aria-label="Cerrar checkout">×</button></div>
   <div class="checkout-layout">
     <form id="checkout-form" novalidate>
-      <div class="form-note"><span>i</span><p>Usa únicamente datos ficticios. No se procesa ningún pago real.</p></div>
+      <div class="form-note"><span>i</span><p>Usa datos ficticios. El resumen se enviará a correocorporativo@planetaficha.onl. No se realiza ningún cobro.</p></div><div aria-hidden="true" style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden"><label>Deja este campo vacío<input name="website" type="text" tabindex="-1" autocomplete="off"></label></div>
       <fieldset><legend>Datos de entrega</legend><div class="form-grid">
         <label>Nombre y apellidos<input name="customerName" required minlength="3" placeholder="Ada Lovelace"></label>
         <label>Correo de prueba<input name="email" type="email" required placeholder="ada@ejemplo.es"></label>
@@ -16,13 +16,13 @@
         <label>Método de pago<select name="paymentMethod" required><option value="">Selecciona una opción</option><option value="Tarjeta de prueba">Tarjeta de prueba</option><option value="Bizum de prueba">Bizum de prueba</option><option value="Transferencia simulada">Transferencia simulada</option></select></label>
       </fieldset>
       <p class="form-error" id="checkout-error" role="alert"></p>
-      <button class="button button-primary button-block" type="submit">Simular pago y crear pedido <span>→</span></button>
+      <button class="button button-primary button-block" type="submit">Simular pago y enviar pedido <span>→</span></button>
     </form>
     <aside class="checkout-order"><p class="eyebrow">Resumen</p><div id="checkout-items"></div><div id="checkout-totals"></div></aside>
   </div>
 </dialog>
 <dialog class="dialog success-dialog" id="success-dialog" aria-labelledby="success-title">
-  <div class="success-mark" aria-hidden="true">✓</div><p class="eyebrow">Pedido registrado</p><h2 id="success-title">¡Mesa reservada!</h2><p id="success-copy"></p><div class="order-status"><span>Estado actual</span><b>Pendiente de preparación</b></div><button class="button button-dark button-block" type="button" data-action="finish-order">Volver al catálogo <span>→</span></button>
+  <div class="success-mark" aria-hidden="true">✓</div><p class="eyebrow">Pedido enviado</p><h2 id="success-title">¡Mesa reservada!</h2><p id="success-copy"></p><div class="order-status"><span>Estado actual</span><b>Pendiente de preparación</b></div><button class="button button-dark button-block" type="button" data-action="finish-order">Volver al catálogo <span>→</span></button>
 </dialog>
 <dialog class="dialog admin-dialog" id="admin-dialog" aria-labelledby="admin-title">
   <div class="dialog-header"><div><p class="eyebrow">Consulta interna</p><h2 id="admin-title">Back-office de prueba</h2></div><button class="icon-button" type="button" data-action="close-admin" aria-label="Cerrar back-office">×</button></div>

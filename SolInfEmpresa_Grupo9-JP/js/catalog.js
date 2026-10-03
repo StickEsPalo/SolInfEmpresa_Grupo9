@@ -1,7 +1,21 @@
+function getVariants(product) {
+  const { variants =  [], ...base } = product;
+
+  return [
+    base,
+    ...variants.map(variant => ({
+      ...base,
+      ...variant,
+      parentId: product.id
+    }))
+  ];
+}
+
 function getProduct(id) {
-  return products.find(
-    product => product.id === id
-  );
+  for (const product of products) {
+    const found = getVariants(product).find(item => item.id === id);
+    if (found) return found;
+  }
 }
 
 function renderCatalog() {
