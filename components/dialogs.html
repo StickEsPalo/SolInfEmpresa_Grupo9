@@ -3,7 +3,7 @@
   <div class="dialog-header"><div><p class="eyebrow">Paso final</p><h2 id="checkout-title">Checkout de prueba</h2></div><button class="icon-button" type="button" data-action="close-checkout" aria-label="Cerrar checkout">×</button></div>
   <div class="checkout-layout">
     <form id="checkout-form" novalidate>
-      <div class="form-note"><span>i</span><p>Usa datos ficticios. El resumen se enviará a correocorporativo@planetaficha.onl. No se realiza ningún cobro.</p></div><div aria-hidden="true" style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden"><label>Deja este campo vacío<input name="website" type="text" tabindex="-1" autocomplete="off"></label></div>
+      <div class="form-note"><span>i</span><p>Usa datos de prueba. El pedido se guardará en la base de datos y el pago es solo una simulación.</p></div><div aria-hidden="true" style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden"><label>Deja este campo vacío<input name="website" type="text" tabindex="-1" autocomplete="off"></label></div>
       <fieldset><legend>Datos de entrega</legend><div class="form-grid">
         <label>Nombre y apellidos<input name="customerName" required minlength="3" placeholder="Ada Lovelace"></label>
         <label>Correo de prueba<input name="email" type="email" required placeholder="ada@ejemplo.es"></label>
@@ -22,7 +22,7 @@
   </div>
 </dialog>
 <dialog class="dialog success-dialog" id="success-dialog" aria-labelledby="success-title">
-  <div class="success-mark" aria-hidden="true">✓</div><p class="eyebrow">Pedido enviado</p><h2 id="success-title">¡Mesa reservada!</h2><p id="success-copy"></p><div class="order-status"><span>Estado actual</span><b>Pendiente de preparación</b></div><button class="button button-dark button-block" type="button" data-action="finish-order">Volver al catálogo <span>→</span></button>
+  <div class="success-mark" aria-hidden="true">✓</div><p class="eyebrow">Pedido registrado</p><h2 id="success-title">¡Mesa reservada!</h2><p id="success-copy"></p><div class="order-status"><span>Estado actual</span><b>Pendiente de preparación</b></div><button class="button button-dark button-block" type="button" data-action="finish-order">Volver al catálogo <span>→</span></button>
 </dialog>
 <dialog class="dialog admin-dialog" id="admin-dialog" aria-labelledby="admin-title">
   <div class="dialog-header"><div><p class="eyebrow">Consulta interna</p><h2 id="admin-title">Back-office de prueba</h2></div><button class="icon-button" type="button" data-action="close-admin" aria-label="Cerrar back-office">×</button></div>
@@ -31,4 +31,84 @@
   <div class="admin-tabs" role="tablist"><button class="is-active" role="tab" type="button" data-admin-tab="orders">Pedidos</button><button role="tab" type="button" data-admin-tab="events">Eventos</button><button role="tab" type="button" data-admin-tab="model">Modelo de datos</button></div>
   <div class="admin-panel" id="admin-orders"></div><div class="admin-panel" id="admin-events" hidden></div><div class="admin-panel" id="admin-model" hidden></div>
 </dialog>
+
+<dialog class="dialog auth-dialog" id="auth-dialog" aria-labelledby="auth-title">
+  <div class="auth-dialog-inner">
+    <div class="dialog-header">
+      <div>
+        <p class="eyebrow" id="auth-eyebrow">Acceso a tu cuenta</p>
+        <h2 id="auth-title">Iniciar sesión</h2>
+      </div>
+      <button class="icon-button" type="button" data-action="close-auth" aria-label="Cerrar inicio de sesión">×</button>
+    </div>
+
+    <p class="auth-gate-message" id="auth-gate-message" hidden role="status"></p>
+
+    <div class="auth-view" id="auth-login-view">
+      <p class="auth-lead" id="auth-login-lead">Inicia sesión para acceder al carrito, comprar y consultar tus pedidos.</p>
+      <form id="login-form" class="auth-form" novalidate>
+        <label>Correo electrónico
+          <input name="email" type="email" autocomplete="email" required placeholder="nombre@ejemplo.com">
+        </label>
+        <label>Contraseña
+          <input name="password" type="password" autocomplete="current-password" required placeholder="Tu contraseña">
+        </label>
+        <p class="form-error" id="login-error" role="alert"></p>
+        <button class="button button-primary button-block" type="submit">Iniciar sesión <span>→</span></button>
+      </form>
+      <div class="auth-switch">
+        <span>¿Todavía no tienes una cuenta?</span>
+        <button type="button" class="text-button" data-action="show-register">Crear nuevo usuario</button>
+      </div>
+    </div>
+
+    <div class="auth-view" id="auth-register-view" hidden>
+      <p class="auth-lead">Crea tu usuario. La cuenta se guarda en la base de datos de PlanetaFicha.</p>
+      <form id="register-form" class="auth-form" novalidate>
+        <div class="auth-form-grid">
+          <label>Nombre
+            <input name="firstName" type="text" autocomplete="given-name" required placeholder="Juan">
+            <small>Debe empezar por mayúscula.</small>
+          </label>
+          <label>Apellidos
+            <input name="lastName" type="text" autocomplete="family-name" required placeholder="García López">
+            <small>Debe empezar por mayúscula.</small>
+          </label>
+          <label class="auth-full-width">Correo electrónico
+            <input name="email" type="email" autocomplete="email" required placeholder="juan@ejemplo.com">
+            <small>Debe contener @ y terminar en .com.</small>
+          </label>
+          <label class="auth-full-width">Contraseña
+            <input name="password" type="password" autocomplete="new-password" required placeholder="Ejemplo123">
+            <small>Debe empezar por mayúscula y contener al menos un número.</small>
+          </label>
+        </div>
+        <p class="form-error" id="register-error" role="alert"></p>
+        <button class="button button-primary button-block" type="submit">Crear usuario <span>→</span></button>
+      </form>
+      <div class="auth-switch">
+        <span>¿Ya tienes una cuenta?</span>
+        <button type="button" class="text-button" data-action="show-login">Volver a iniciar sesión</button>
+      </div>
+    </div>
+
+    <div class="auth-view" id="auth-account-view" hidden>
+      <p class="auth-lead">Desde aquí puedes consultar tus compras. El listado muestra únicamente los pedidos asociados a tu cuenta.</p>
+      <div class="account-summary">
+        <span class="account-avatar" aria-hidden="true">P</span>
+        <div>
+          <b id="account-name">Usuario</b>
+          <small id="account-email">correo@ejemplo.com</small>
+          <span class="role-chip" id="account-role">Usuario</span>
+        </div>
+      </div>
+      <div id="account-orders" class="account-orders"></div>
+      <div class="account-actions">
+        <button id="account-admin-button" class="button button-dark button-block" type="button" data-action="open-admin-from-account" hidden>Acceder al back-office <span>→</span></button>
+        <button class="button button-block account-logout-button" type="button" data-action="logout">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>

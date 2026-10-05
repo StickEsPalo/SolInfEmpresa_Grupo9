@@ -1,4 +1,4 @@
-const products = [
+const STATIC_PRODUCTS = [
   {
     id: "ajedrez",
     title: "Ajedrez",
@@ -19,6 +19,35 @@ const products = [
       "Un verdadero duelo mental. Controla tus piezas, domina el tablero y atrapa al rey enemigo.",
     mechanics: "movimiento de cuadrícula · abstracción",
     language: "Sin dependencia",
+
+    variants: [
+      {
+        id: "ajedrez-430",
+        title: "Ajedrez",
+        subtitle: "Edición caballeros templarios",
+        image: "img/products/ajedrez-430.jpg",
+        price: 430.0,
+        description: "Juega al ajedrez al más estilo medieval. Guia a tus caballeros templarios y álzate victorioso en esta cruzada.",
+        players: "2",
+        duartion: "5-1200 min",
+        author: "Tradicional",
+        language: "Sin dependencia",
+        mechanics: "movimiento de cuadrícula · abstracción"
+      },
+      {
+        id: "ajedrez-17500",
+        title: "Ajedrez",
+        subtitle: "Edición premium",
+        image: "img/products/ajedrez-17500.jpg",
+        price: 17500.0,
+        description: "Juega al ajedrez y disfruta de un tablero y piezas de la más alta gama. Tan solo prepara tu riñón para comprarlo...",
+        players: "2",
+        duartion: "5-1200 min",
+        author: "Tradicional",
+        language: "Sin dependencia",
+        mechanics: "movimiento de cuadrícula · abstracción"
+      },
+    ],
   },
   {
     id: "shogi",
@@ -82,6 +111,35 @@ const products = [
       "Coloniza una isla desierta construyendo pueblos y carreteras mediante la gestión y el comercio de recursos.",
     mechanics: "comercio · dados · control de áreas",
     language: "Español",
+
+    variants: [
+      {
+        id: "catan-navegantes",
+        title: "Catan",
+        subtitle: "Expansión navegantes",
+        image: "img/products/catan-navegantes.jpg",
+        price: 46.0,
+        description: "Juega y disfruta de esta expansión navegantes de catan.",
+        players: "3-4",
+        duartion: "60-90 min",
+        author: "Klau Teuber",
+        language: "Español",
+        mechanics: "comercio · dados · control de áreas"
+      },
+      {
+        id: "catan-piratas-y-exploradores",
+        title: "Catan",
+        subtitle: "Expansión piratas y exploradores",
+        image: "img/products/catan-piratas-y-exploradores.jpg",
+        price: 46.0,
+        description: "Juega y disfruta de esta expansión piratas y exploradores de catan.",
+        players: "3-4",
+        duartion: "60-90 min",
+        author: "Klaus Teuber",
+        language: "Español",
+        mechanics: "comercio · dados · control de áreas"
+      },
+    ],
   },
   {
     id: "carcassonne",
@@ -252,3 +310,61 @@ const products = [
     language: "Sin dependencia",
   },
 ];
+
+
+let products = structuredClone(STATIC_PRODUCTS);
+
+function useStaticProductFallback() {
+  products = structuredClone(STATIC_PRODUCTS).map(attachVisualData);
+  return products;
+}
+
+const PRODUCT_VISUALS = {
+  "1": {tone:"#e8ddca", text:"#29251e", symbol:"♔"},
+  "2": {tone:"#ead1b2", text:"#30261d", symbol:"☖"},
+  "3": {tone:"#dce8c9", text:"#293321", symbol:"☣"},
+  "4": {tone:"#f0d995", text:"#342b1e", symbol:"⬡"},
+  "5": {tone:"#d8e4ed", text:"#253541", symbol:"⛫"},
+  "6": {tone:"#d2e0e6", text:"#24363d", symbol:"➕"},
+  "7": {tone:"#eadce7", text:"#392d39", symbol:"★"},
+  "8": {tone:"#d8e7cf", text:"#2a3625", symbol:"🦁"},
+  "9": {tone:"#e5d9eb", text:"#372b3e", symbol:"◆"},
+  "10": {tone:"#d9e0ee", text:"#293244", symbol:"◌"},
+  "11": {tone:"#ead8c8", text:"#382b22", symbol:"🪲"},
+  "12": {tone:"#f0e4ad", text:"#3b321d", symbol:"🚗"},
+  "13": {tone:"#d7c6a9", text:"#30271d", symbol:"♞"},
+  "14": {tone:"#d0d9e3", text:"#242e3a", symbol:"♛"},
+  "15": {tone:"#cce1dc", text:"#223632", symbol:"⛵"},
+  "16": {tone:"#cfd9e9", text:"#263247", symbol:"⚓"},
+  "ajedrez": {tone:"#e8ddca", text:"#29251e", symbol:"♔"},
+  "ajedrez-430": {tone:"#d7c6a9", text:"#30271d", symbol:"♞"},
+  "ajedrez-17500": {tone:"#d0d9e3", text:"#242e3a", symbol:"♛"},
+  "shogi": {tone:"#ead1b2", text:"#30261d", symbol:"☖"},
+  "virus": {tone:"#dce8c9", text:"#293321", symbol:"☣"},
+  "catan": {tone:"#f0d995", text:"#342b1e", symbol:"⬡"},
+  "catan-navegantes": {tone:"#cce1dc", text:"#223632", symbol:"⛵"},
+  "catan-piratas-y-exploradores": {tone:"#cfd9e9", text:"#263247", symbol:"⚓"},
+  "carcassonne": {tone:"#d8e4ed", text:"#253541", symbol:"⛫"},
+  "pandemic": {tone:"#d2e0e6", text:"#24363d", symbol:"➕"},
+  "dixit": {tone:"#eadce7", text:"#392d39", symbol:"★"},
+  "dobutsu-shogi": {tone:"#d8e7cf", text:"#2a3625", symbol:"🦁"},
+  "oshi": {tone:"#e5d9eb", text:"#372b3e", symbol:"◆"},
+  "tragedy-looper": {tone:"#d9e0ee", text:"#293244", symbol:"◌"},
+  "kabuto-sumo": {tone:"#ead8c8", text:"#382b22", symbol:"🪲"},
+  "rush-hour": {tone:"#f0e4ad", text:"#3b321d", symbol:"🚗"}
+};
+
+function attachVisualData(row) {
+  return {...row, ...(PRODUCT_VISUALS[row.id] || {tone:"#1c1c1c",text:"#ffffff",symbol:"◆"})};
+}
+
+async function loadProductsFromApi() {
+  const data = await apiRequest("./api/products.php");
+  const flat = (data.products || []).map(attachVisualData);
+  const parents = flat.filter(p => !p.parentId);
+  products = parents.map(parent => {
+    const variants = flat.filter(p => p.parentId === parent.id);
+    return variants.length ? {...parent, variants} : parent;
+  });
+  return products;
+}

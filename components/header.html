@@ -14,6 +14,21 @@
     <a href="#trazabilidad">Trazabilidad</a>
   </nav>
   <button class="mobile-menu-toggle" type="button" data-action="toggle-mobile-menu" aria-label="Abrir menú" aria-expanded="false">☰</button>
+  <button class="language-toggle" id="language-toggle" type="button" data-action="toggle-language" aria-label="Cambiar idioma a inglés" title="English">
+    <span class="language-flag flag-spain" id="language-flag" aria-hidden="true"></span>
+    <span class="language-code" id="language-code">ES</span>
+  </button>
+  <div class="currency-control">
+    <label class="sr-only" for="currency-select">Moneda</label>
+    <select id="currency-select" class="currency-select" title="Conversión orientativa · referencia BCE 05/10/2026">
+      <option value="EUR">€ · EUR</option>
+      <option value="USD">$ · USD</option>
+      <option value="GBP">£ · GBP</option>
+    </select>
+  </div>
+  <button class="account-button" type="button" data-action="open-auth" aria-label="Abrir mi cuenta o iniciar sesión">
+    <span aria-hidden="true">◌</span> <span id="account-button-label">Iniciar sesión</span>
+  </button>
   <button class="cart-button" type="button" data-action="open-cart" aria-label="Abrir carrito">
     <span aria-hidden="true">◒</span> Carrito <b id="cart-count">0</b>
   </button>

@@ -1,19 +1,42 @@
 # PlanetaFicha - prototipo de eCommerce de importación
 
-PlanetaFicha es un prototipo académico de canal digital de venta para un comercio de juegos de mesa y puzzles de diseño europeo y asiático. No hay actividad comercial, pagos reales, cuentas reales ni credenciales en el proyecto.
+PlanetaFicha es un prototipo académico de canal digital de venta para un comercio de juegos de mesa y puzzles de diseño europeo y asiático. No hay actividad comercial ni pagos reales: el pago es simulado y los datos de cliente deben ser siempre ficticios.
+
+La web tiene un **front-end estático** (HTML, CSS y JavaScript sin compilación) y un **back-end PHP + MySQL/MariaDB** con API propia, cuentas de usuario con sesión (roles `cliente` y `administrador`), pedidos y eventos guardados en base de datos, back-office protegido y aviso por correo de cada pedido nuevo. Está publicada en un hosting con PHP y HTTPS (DonDominio).
 
 ## Puesta en marcha
 
-La interfaz sigue siendo HTML/CSS/JavaScript, pero el checkout usa `enviar-pedido.php` para mandar el resumen por SMTP autenticado. No requiere `npm` ni base de datos; el hosting del dominio debe ejecutar PHP.
+### Requisitos
 
-**Importante:** desde que la interfaz se divide en componentes (`components/*.html`), `index.html` los carga con `fetch()`. Por eso **ya no basta con abrir `index.html` haciendo doble clic** (con `file://` el navegador bloquea esas peticiones y aparece el mensaje "No se ha podido cargar la página completa"). Hay que servir la carpeta con un servidor local:
+- Servidor HTTP con **PHP 8** y extensión `pdo_mysql`, y una base de datos MySQL/MariaDB.
+- Conexión a internet en el navegador (tipografías de Google Fonts).
+
+`index.html` carga los componentes (`components/*.html`) con `fetch()`, así que **no funciona abriéndolo con doble clic** (`file://`): hay que servirlo por HTTP.
+
+### Entorno local
 
 ```powershell
 cd SolInfEmpresa_Grupo9-JP
-python -m http.server 8080
+php -S localhost:8080
 ```
 
-Después, abrir `http://localhost:8080`. Este comando solo sirve los archivos estáticos; para probar el envío PHP localmente se necesita un servidor PHP y el archivo de configuración SMTP. Para publicar el checkout con correo, usa un hosting que ejecute PHP, como el hosting del dominio.
+Live Server de VS Code y `python -m http.server` **no ejecutan PHP**: sirven solo para revisar la parte visual (el catálogo usa entonces los productos estáticos de respaldo, pero no hay login, pedidos ni back-office). Para probar la API sin MySQL puede usarse el adaptador `mock` (ver "Pruebas automáticas").
+
+### Despliegue en el hosting
+
+Pasos resumidos (el detalle está en `DEPLOYAR.md`; ese archivo es solo para el equipo y **no debe subirse al hosting**):
+
+1. Crear una base de datos MySQL/MariaDB y un usuario con permisos sobre ella; importar `database/juegos_y_puzles.sql`.
+2. Copiar `api/config/config.example.php` a `api/config/config.php` y rellenarlo **directamente en el servidor** (dominio y MySQL). Para SMTP, seguir las instrucciones de “Correo corporativo” más abajo; nunca añadir la copia real al repositorio.
+3. Subir el contenido de la carpeta respetando las carpetas (`api/`, `components/`, `js/`, `img/`, `database/`). En DonDominio se hace con el cliente web FTP (Monsta FTP) del panel, dentro de la carpeta `public`.
+4. Abrir `https://TU-DOMINIO/api/health.php`: con MySQL conectado devuelve JSON con `"ok":true`.
+5. Probar a mano: registro e inicio de sesión de cliente, añadir al carrito, pedido, acceso al back-office con un administrador, y comprobar el aviso de correo de pedido e incidencia.
+
+GitHub Pages, Netlify y Cloudflare Pages solo sirven archivos estáticos y no ejecutan PHP, por lo que no valen para esta versión. El hosting ya redirige `http` a `https`.
+
+### Versión de los archivos (caché del navegador)
+
+`index.html` carga los scripts y la hoja de estilos con un parámetro de versión (`?v=...`). Hay **dos valores que deben ser siempre idénticos**: la constante `ASSET_VERSION` del script de `index.html` y el `?v=` del enlace a `styles.css`. Cada vez que se suba al hosting un cambio en cualquier `.js` o en `styles.css`, hay que cambiar ambos al mismo valor nuevo. No se debe reutilizar un valor ya publicado. Esta carpeta queda preparada con `20261005-9`; al publicar estos archivos, el hosting debe usar el mismo identificador.
 
 ## Estructura del proyecto
 
@@ -21,14 +44,12 @@ Después, abrir `http://localhost:8080`. Este comando solo sirve los archivos es
 SolInfEmpresa_Grupo9-JP/
 ├── index.html              Carga los componentes y los scripts en orden
 ├── app.js                  Estado global, referencias al DOM, eventos y arranque
-├── enviar-pedido.php       Valida el pedido y lo envía por SMTP (sin base de datos)
-├── config.mail.example.php Plantilla de conexión SMTP
-├── config.mail.php         Clave privada SMTP (se crea al configurar; no subir a Git)
 ├── styles.css              Diseño responsive
-├── styles-backup.css       Copia de seguridad del CSS
-├── juegos_y_puzles.sql     Plantilla de base de datos (aún sin conectar)
+├── .htaccess               Bloqueos de acceso y cabeceras de seguridad (ver "Seguridad")
+├── DEPLOYAR.md             Guía de despliegue (solo para el equipo)
+├── config.mail.example.php Plantilla heredada de la configuración SMTP
 ├── components/             Fragmentos HTML de cada sección
-│   ├── header.html         Cabecera, menú móvil y botón flotante del carrito
+│   ├── header.html         Cabecera, menú móvil, acceso/cuenta y botón flotante del carrito
 │   ├── hero.html           Portada
 │   ├── trust.html          Garantías del prototipo
 │   ├── catalog.html        Buscador, filtros y rejilla de productos
@@ -37,64 +58,89 @@ SolInfEmpresa_Grupo9-JP/
 │   ├── support.html        Formulario de soporte
 │   ├── footer.html         Pie de página
 │   ├── cart.html           Panel lateral del carrito
-│   └── dialogs.html        Ficha de producto, checkout, éxito y back-office
-├── img/
-│   └── products/           Fotos de los productos (una por juego, .jpg)
-└── js/
-    ├── data/products.js    Catálogo maestro de productos
-    ├── utils.js            readStorage(), persist(), safeText(), formatPrice()
-    ├── events.js           logEvent(), vista previa, exportación y borrado
-    ├── catalog.js          getProduct(), filtrado y renderizado del catálogo
-    ├── cart.js             Carrito, totales, miniaturas y botón flotante
-    ├── checkout.js         Checkout, validación y creación del pedido
-    ├── support.js          Solicitudes de soporte
-    └── admin.js            Back-office (pedidos, eventos y modelo de datos)
+│   └── dialogs.html        Acceso/registro, ficha de producto, checkout, éxito y back-office
+├── img/products/           Fotos de los productos (una por juego y variante, .jpg)
+├── js/
+│   ├── i18n.js            Selector ES/EN, traducciones y preferencia de idioma guardada
+│   ├── data/products.js    Catálogo estático: visuales (`PRODUCT_VISUALS`) y respaldo (`STATIC_PRODUCTS`)
+│   ├── utils.js            Cliente de la API (CSRF), readStorage(), persist(), safeText(), formatPrice()
+│   ├── auth.js             Sesión, login, registro, cierre de sesión y formularios de acceso
+│   ├── events.js           logEvent(), vista previa, exportación y envío de eventos a la API
+│   ├── catalog.js          getVariants(), getProduct(), filtrado y renderizado del catálogo
+│   ├── cart.js             Carrito por usuario, totales, miniaturas y botón flotante
+│   ├── checkout.js         Checkout, validación y creación del pedido (API)
+│   ├── support.js          Incidencias de soporte (API)
+│   └── admin.js            Back-office (pedidos, eventos y modelo de datos)
+├── api/
+│   ├── lib/                bootstrap.php (config, sesión, CSRF, roles), repository.php (acceso a datos), mail.php (SMTP)
+│   ├── auth/               login.php, logout.php, register.php, session.php
+│   ├── products.php        Catálogo desde la base de datos
+│   ├── orders/             create.php (crear pedido), my-orders.php (pedidos del usuario)
+│   ├── admin/              orders.php, events.php (solo administrador)
+│   ├── events/log.php      Registro de eventos de la interfaz
+│   ├── support.php         Alta de incidencias
+│   ├── health.php          Comprobación de la conexión a la base de datos
+│   └── config/             config.example.php (plantilla); config.php real solo en el servidor
+├── database/
+│   ├── juegos_y_puzles.sql Esquema y datos iniciales
+│   └── migraciones/        Cambios opcionales del esquema (ver "Mejoras propuestas")
+└── tests/                  Prueba virtual end-to-end (virtual_e2e.py, mock-db.json)
 ```
 
-**Orden de carga** (definido en `index.html`): `products.js` → `utils.js` → `events.js` → `catalog.js` → `cart.js` → `checkout.js` → `support.js` → `admin.js` → `app.js`. Los módulos usan funciones globales y `state`/`refs` (definidos en `app.js`) solo cuando se ejecutan, nunca al cargarse, por lo que el orden funciona.
+> `enviar-pedido.php` y `enviar-incidencia.php` pertenecen a la versión anterior (correo sin base de datos). Ya no los usa la web y se han eliminado del hosting; si siguen en el repositorio, pueden borrarse.
 
-## Usuarios y datos de prueba
+**Orden de carga** (definido en `index.html`): `products.js` → `utils.js` → `auth.js` → *(espera a la sesión, `authReady`)* → carga del catálogo desde `api/products.php` (con respaldo estático si la API falla) → `events.js` → `catalog.js` → `cart.js` → `checkout.js` → `support.js` → `admin.js` → `app.js`. Los scripts comparten el ámbito global, así que **no se puede declarar dos veces la misma `const`/`let` en archivos distintos** (provoca un `SyntaxError` y la web deja de cargar). Los módulos usan funciones globales y `state`/`refs` (definidos en `app.js`) solo al ejecutarse, nunca al cargarse.
 
-No se requiere inicio de sesión. En el checkout deben introducirse datos ficticios. Por ejemplo:
+## Usuarios, roles y datos de prueba
 
-- Nombre: `Ada Lovelace`
-- Correo: `ada@ejemplo.es`
-- Dirección: `C/ Ejemplo, 42`
-- Código postal: `28001`
-- Ciudad: `Madrid`
-- Promoción opcional: `YUZU10` (aplica un 10% de descuento simulado)
+- **Hay que iniciar sesión** para añadir productos al carrito y hacer el pedido. El registro crea cuentas con rol `cliente` (nombre y apellidos con mayúscula inicial, correo con `@` que termine en `.com` y contraseña que empiece por mayúscula, con al menos 6 caracteres y un número); el rol `administrador` da acceso al back-office ("Panel de evidencias").
+- Las contraseñas se guardan con `password_hash()` y se comprueban con `password_verify()`. Los administradores se crean directamente en la base de datos.
+- **Las credenciales de las cuentas (administrador, demostración) no se publican en este archivo ni en GitHub.** Se entregan por separado para la evaluación.
+- En el checkout deben introducirse datos ficticios. Ejemplo: nombre `Ada Lovelace`, dirección `C/ Ejemplo, 42`, código postal `28001`, ciudad `Madrid`. Promoción opcional: `YUZU10` (10 % de descuento simulado).
+
+## Correo corporativo
+
+Los endpoints vigentes son `api/orders/create.php` y `api/support.php`. Ambos comparten el envío SMTP de `api/lib/mail.php`, guardan primero el pedido/incidencia en MySQL y después intentan notificar al buzón `correocorporativo@planetaficha.onl`. Los PHP sueltos `enviar-pedido.php` y `enviar-incidencia.php` pertenecen a la versión antigua: usaban otro formato JSON, no guardaban en esta base de datos y no deben usarse ni volver a subirse al hosting.
+
+La plantilla `api/config/config.example.php` deja el correo apagado. En el servidor, dentro de `api/config/config.php`, configura el bloque `mail` con estos datos:
+
+| Campo | Valor |
+| --- | --- |
+| `enabled` | `true`, cuando el buzón ya esté configurado |
+| `host` | `smtp.dondominio.com` (confirma el servidor que muestra el panel de correo) |
+| `port` | `587` (STARTTLS), o `465` si el panel indica TLS implícito |
+| `username` | `correocorporativo@planetaficha.onl` |
+| `password` | Contraseña del buzón; introducirla solo en el archivo protegido del servidor |
+| `from_email` | `correocorporativo@planetaficha.onl` |
+| `to_email` | `correocorporativo@planetaficha.onl` |
+| `ehlo` | `planetaficha.onl` |
+
+DonDominio documenta SMTP autenticado con `smtp.dondominio.com`, puerto 587 y STARTTLS ([ayuda oficial](https://www.dondominio.com/es/help/88/como-configuro-las-cuentas-correo-en-microsoft-outlook/)). El remitente y usuario SMTP deben ser un buzón válido del dominio con su propia contraseña. Si la cuenta está alojada en otro proveedor, usa los datos de su panel.
+
+La respuesta de ambas APIs incluye `mailSent`. La interfaz confirma cuando el servidor SMTP aceptó el aviso; si no, indica que el pedido/incidencia quedó guardado pero que el correo no se pudo enviar. El error técnico se escribe en el log PHP del servidor sin registrar la contraseña. La aceptación SMTP confirma que el servidor recibió el mensaje para procesarlo, no garantiza que el destinatario lo vea fuera de spam.
+
+**Privacidad:** cada notificación de pedido incluye nombre, correo y dirección de entrega junto a los artículos y totales; la incidencia incluye asunto y descripción. La aplicación es un prototipo académico: usar solo datos ficticios. No guardar el bloque real de SMTP ni la contraseña de MySQL en GitHub. `.gitignore` ayuda al usar Git, pero no impide seleccionar esos archivos manualmente al subir desde la web de GitHub.
 
 ## Flujo funcional demostrable
 
-1. Navegar o filtrar el catálogo de 12 referencias reales (juegos de mesa y puzzles) por:
-   - **Categoría:** Estrategia, Familiar, Cooperativo o Puzzle.
-   - **Jugadores:** 1 jugador, 2-3 o 4+.
-   - **Dificultad:** Iniciación, Media o Experta.
-   - **Búsqueda de texto** por título, subtítulo, autor, origen o categoría.
-   - En móvil, el panel de filtros se pliega con el botón "Filtros".
-   - Cada tarjeta muestra la foto del juego; si una imagen falta o no carga, se ve el diseño de color con el símbolo del juego.
-2. Abrir una ficha: genera `product.viewed`. La ficha muestra la foto del juego junto a su título.
-3. Añadir productos al carrito: genera `cart.item_added`. Cada línea del carrito lleva una miniatura con la foto. El carrito se abre desde la cabecera o desde el **botón flotante**, que aparece cuando el botón de la cabecera sale de pantalla y muestra el mismo contador.
-4. Abrir el checkout: genera `checkout.started`; se calcula IVA al 21%, transporte gratuito a partir de 70 EUR y el descuento de prueba.
-5. Completar el formulario: el endpoint PHP valida productos y cantidades, calcula los importes con el catálogo y envía el resumen al correo corporativo. El pago es simulado; el pedido queda en el historial local del navegador.
-6. Abrir "Panel de evidencias" para consultar pedidos y eventos o exportar estos últimos a JSON.
-7. Usar el formulario de soporte para registrar `support.requested`.
-
-### Envío de pedidos e incidencias por correo (DonDominio)
-
-1. Crea o confirma que existe el buzón `correocorporativo@planetaficha.onl` en DonDominio.
-2. Copia `config.mail.example.php` y renómbralo `config.mail.php`.
-3. En `config.mail.php`, introduce la contraseña de ese buzón en `password`. La plantilla usa `smtp.planetaficha.onl`, puerto 587 y autenticación. Según la guía actual de DonDominio para envíos desde la web, deja el cifrado y TLS automático desactivados.
-4. Sube `enviar-pedido.php`, `config.mail.php`, `.htaccess` y la web al hosting. La página y el endpoint deben estar bajo el mismo dominio y usarse con HTTPS.
-5. Envía una incidencia de prueba y verifica la bandeja de entrada y spam. Los pedidos también usan esta configuración SMTP.
-
-DonDominio requiere SMTP autenticado con un buzón del propio dominio; `mail()` de PHP no es el método admitido. Para envíos desde la web, la guía de DonDominio indica el servidor `smtp.midominio.com`, puerto 587, autenticación activa y cifrado/TLS automático desactivados. La clave solo se guarda en `config.mail.php`, que está excluido de Git y bloqueado por `.htaccess`. Si el correo no está alojado en DonDominio, pide a su proveedor los datos SMTP compatibles con el hosting.
-
-El endpoint de pedidos no guarda pedidos en servidor ni envía recibo al comprador. Conserva la orden en el navegador actual y envía un aviso al correo corporativo. El endpoint `enviar-incidencia.php` envía las incidencias al mismo buzón y solo las registra en el navegador después de que el servidor acepte el correo. El importe de los pedidos se recalcula con una lista de precios fija porque no se conecta a la base de datos.
+1. Navegar o filtrar el catálogo (productos reales de juegos de mesa y puzzles) por **categoría** (Estrategia, Familiar, Cooperativo, Puzzle), **jugadores** (1, 2-3 o 4+), **dificultad** (Iniciación, Media, Experta) y **búsqueda de texto**. En móvil, el panel de filtros se pliega con el botón "Filtros". Si una imagen falta, la tarjeta muestra el diseño de color con el símbolo del juego.
+2. Abrir una ficha (`product.viewed`). Algunos juegos tienen **variantes** (ediciones) con flechas y puntos para cambiar entre ellas.
+3. Iniciar sesión o registrarse; los formularios se limpian al cerrar el diálogo, al entrar y al cerrar sesión.
+4. Añadir productos al carrito (`cart.item_added`). El carrito es **por usuario** y se guarda en `localStorage`. Se abre desde la cabecera o desde el botón flotante.
+5. Abrir el checkout (`checkout.started`): IVA del 21 %, transporte gratuito desde 70 EUR y descuento `YUZU10`.
+6. Confirmar el pedido: el servidor valida los datos, **recalcula los importes con los precios de la base de datos**, comprueba y **descuenta el stock** dentro de una transacción, crea el pedido con código `PF-AAAA-XXXXXXXX`, simula el pago (método de prueba) y registra los eventos `order.created` y `payment.simulated`. Una vez guardado, intenta enviar el **resumen del pedido por correo** y devuelve el resultado en `mailSent`. Si SMTP falla, el pedido se conserva y la interfaz lo indica.
+7. Consultar "Mis pedidos" (cliente) o el "Panel de evidencias" (administrador): pedidos de todos los usuarios y los últimos 500 eventos, con exportación de eventos a JSON.
+8. Enviar el formulario de soporte (`support.requested`): la incidencia se guarda en la tabla `incidencias` y se intenta notificar al buzón corporativo; la interfaz informa si el servidor aceptó el correo.
 
 ## Catálogo
 
-El catálogo maestro está en `js/data/products.js` y contiene 12 referencias reales de 6 países de diseño (India, Japón, España, Alemania, Estados Unidos y Francia). La distribución actual es:
+El catálogo se lee de la base de datos (`api/products.php`, tablas `productos`, `categorias`, `origenes` y relaciones). El archivo `js/data/products.js` aporta solo la parte visual (colores, símbolo e imagen por producto, `PRODUCT_VISUALS`) y un **catálogo estático de respaldo** (`STATIC_PRODUCTS`) que se usa si la API no responde. Hay 12 referencias base de 6 países de diseño, más dos variantes de Ajedrez y dos de Catan, con una ficha por variante.
+
+**Presentación de precios:** los precios guardados en la base de datos y enviados por la API son importes **sin IVA**. Las tarjetas del catálogo, las fichas de producto, el carrito y las líneas del checkout muestran primero el precio con el 21 % de IVA y, debajo, en menor tamaño, el precio sin IVA. `priceIncludingVat()` y `priceBreakdownMarkup()` (`js/utils.js`) centralizan ese formato. El subtotal, descuento y envío del resumen siguen expresándose antes de IVA, la línea de IVA conserva el desglose y el total final ya incluye el impuesto. El servidor sigue calculando el pedido con los importes de la base de datos; el cambio es solo de presentación y no añade IVA una segunda vez.
+
+**Selector de moneda:** el selector del encabezado cambia la presentación entre euros, dólares estadounidenses y libras esterlinas. El catálogo y los cálculos del pedido conservan el euro como moneda base; `formatPrice()` convierte solo lo que se muestra en pantalla y la preferencia se guarda en `localStorage`. Para la demostración se fijan tasas orientativas por cada euro: USD 1,1204 y GBP 0,84720, referencia del BCE del 5 de octubre de 2026 ([BCE](https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.eu.html)). El BCE publica estas tasas para información y desaconseja su uso para transacciones: no son tasas en tiempo real y no deben usarse para cobrar.
+
+**Paleta y variantes:** cada juego usa un tono pastel propio con texto oscuro de alto contraste; la franja del título y la etiqueta «Diseño · país» comparten el tono. En productos con ediciones, las flechas laterales del catálogo cambian la foto, subtítulo, descripción, precio e identificador que se añade al carrito. La ficha conserva las mismas variantes y permite cambiarlas con flechas y puntos. Los colores de `PRODUCT_VISUALS` (`js/data/products.js`) están asociados tanto a los IDs numéricos de la base de datos como a los IDs del catálogo de respaldo.
 
 | Categoría | Referencias |
 | --- | --- |
@@ -103,69 +149,104 @@ El catálogo maestro está en `js/data/products.js` y contiene 12 referencias re
 | Cooperativo | 2 (Pandemic, Tragedy Looper) |
 | Puzzle | 1 (Rush Hour) |
 
-Reglas de datos que conviene respetar al añadir productos:
+Reglas de datos al añadir o cambiar productos:
 
-- El valor de `category` debe coincidir **exactamente** con el `data-value` de los botones de `components/catalog.html` (por ejemplo, `"Puzzle"` en singular). Si no, el filtro no devuelve resultados.
-- `playerFilter` debe ser coherente con `players`: `"solo"` (1 jugador), `"small"` (partidas que admiten 2-3) y `"group"` (partidas que admiten 4 o más). Un juego de 2-4 jugadores lleva `["small", "group"]`.
+- El precio y el stock **solo cuentan en la base de datos**; el servidor ignora los importes que envía el navegador. Si se cambia un precio, hay que actualizarlo también en el catálogo estático de respaldo para que coincidan.
+- Un producto nuevo necesita su fila en `productos` (con categoría y origen) y, para que se vea bien, su entrada en `PRODUCT_VISUALS` (`tone`, `text`, `symbol`, `image`).
+- El valor de la categoría debe coincidir **exactamente** con el `data-value` de los botones de `components/catalog.html` (p. ej. `Puzzle`, en singular).
+- Los filtros de jugadores se calculan en `api/products.php` a partir de los mínimos y máximos de jugadores: `solo` (admite 1), `small` (admite 2-3) y `group` (admite 4 o más). Un juego de 1 a 4 jugadores aparece en los tres filtros.
 - `difficulty` debe ser `Iniciación`, `Media` o `Experta`.
 - Si cambia el número de referencias o de países, actualizar a mano los datos del hero (`components/hero.html`).
-- El campo `image` apunta a la foto del producto con una ruta **relativa a `index.html`** (no a `products.js`), por ejemplo `"img/products/ajedrez.jpg"`. Es opcional: sin él, o si el archivo no carga, el producto conserva el diseño de color con `tone`, `text` y `symbol`, por lo que estos tres campos no deben borrarse.
+- El campo `image` es una ruta relativa a `index.html` (p. ej. `img/products/ajedrez.jpg`). Es opcional; sin ella la tarjeta usa el diseño de color, por lo que `tone`, `text` y `symbol` no deben borrarse.
+
+### Variantes de producto
+
+Una variante es un producto de la base de datos con `producto_padre_id` apuntando al producto base; hereda lo que no cambia. `getVariants(product)` (`js/catalog.js`) devuelve el producto base y sus variantes, y `getProduct(id)` encuentra cualquiera por `id`. En el catálogo solo aparece una tarjeta por producto base, con flechas para pasar entre ediciones; la ficha también permite navegar las variantes. Cada variante se añade al carrito, se cobra y se registra con su propio `id`. Ajedrez tiene la edición base y dos variantes (tres ediciones en total); Catan tiene la caja base y dos expansiones.
 
 ### Imágenes de productos
 
-Las fotos están en `img/products/`, en formato `.jpg`, con el mismo nombre que el `id` del producto (`ajedrez.jpg`, `rush-hour.jpg`...). Se recomienda que sean cuadradas o casi cuadradas, con fondo blanco, de unos 800×800 px y menos de 150 KB cada una.
-
-Se muestran en tres sitios:
-
-- **Catálogo:** la foto ocupa la parte superior de la tarjeta, centrada y entera sobre fondo blanco (`object-fit: contain`). Debajo, la franja con el color del juego contiene el título y el subtítulo. La etiqueta "Diseño · País" se sitúa sobre la foto.
-- **Ficha de producto:** la foto llena el panel izquierdo y el título permanece abajo, en su recuadro de color.
-- **Carrito:** cada línea lleva una miniatura de 56×56 px con la foto. Si falla, se ve el símbolo sobre fondo de color, como antes.
-
-Si una imagen no carga, un atributo `onerror` la elimina y la tarjeta vuelve al diseño de color, de modo que no se ven imágenes rotas.
+Están en `img/products/`, en `.jpg`, con el nombre del `id` del producto (`ajedrez.jpg`, `rush-hour.jpg`...). Se recomiendan imágenes cuadradas, fondo blanco, unos 800×800 px y menos de 150 KB. Se muestran en el catálogo (foto entera sobre fondo blanco), en la ficha (panel izquierdo) y como miniatura de 56×56 px en el carrito. Si una imagen no carga, un `onerror` la retira y se ve el diseño de color.
 
 ## Persistencia y modelo de datos
 
-El carrito, los pedidos visibles en el back-office, incidencias y eventos se conservan en `localStorage` de ese navegador. Al confirmar un pedido, sus datos también se envían a `enviar-pedido.php`, que manda un correo al buzón corporativo; el servidor no guarda la orden ni requiere base de datos.
+La información importante vive en **MySQL**; en el navegador solo queda el carrito.
 
-| Entidad | Campos principales | Relación |
+| Dónde | Qué guarda |
+| --- | --- |
+| Base de datos | usuarios, productos y stock, pedidos, líneas, pagos simulados, direcciones de pedido, eventos e incidencias |
+| `localStorage` | carrito por usuario (clave `planetaFicha.cart.user.v3.<id de usuario>`) |
+| Cookie de sesión | identificador de sesión PHP (`HttpOnly`, `SameSite=Lax`, `Secure` en HTTPS) |
+
+### Base de datos (`database/juegos_y_puzles.sql`)
+
+Tablas: `productos`, `categorias`, `producto_categoria`, `origenes`, `producto_origen`, `usuarios` (con `apellidos` y `rol`), `pedidos`, `lineas_pedido`, `pagos`, `direcciones_pedido`, `eventos` e `incidencias`. Detalles de funcionamiento:
+
+- **Stock:** al crear un pedido se descuenta con `UPDATE productos SET stock = stock - ? WHERE id = ? AND stock >= ?` dentro de una transacción; si no hay stock suficiente, el pedido se rechaza completo y no se crea nada. Aún no se muestra el stock en la tienda.
+- **Eventos:** el administrador ve los últimos 500 (`LIMIT 500`). No hay política de retención ni índice sobre `fecha_evento`, por lo que la tabla crece sin límite (ver "Mejoras propuestas").
+- **Incidencias:** se guardan en `incidencias`, pero todavía no se listan en el back-office.
+- La estadística "Usuarios" del back-office cuenta usuarios con pedidos, no todos los registrados.
+
+## API y flujo de seguridad de la aplicación
+
+| Endpoint | Método | Acceso |
 | --- | --- | --- |
-| Producto | id, title, subtitle, category, players, playerFilter, difficulty, duration, origin, author, price, tone, text, symbol, image, description, mechanics, language | catálogo maestro en `js/data/products.js` |
-| Carrito | productId, quantity | referencia a Producto |
-| Pedido | id, fecha, cliente de prueba, líneas, totales, código promocional, estado, historial de estados | agrupa líneas y pago |
-| Línea de pedido | productId, título, precio unitario, cantidad | pertenece a Pedido |
-| Pago simulado | método, estado, referencia | embebido en un Pedido |
-| Evento | id, tipo, fecha, fuente, payload | evidencia trazable de negocio |
-| Soporte | id, fecha, correo ficticio, mensaje, estado | solicitud postventa |
+| `api/auth/session.php` | GET | público (devuelve usuario y token CSRF) |
+| `api/auth/login.php`, `register.php`, `logout.php` | POST | público / sesión |
+| `api/products.php` | GET | público |
+| `api/orders/create.php` | POST | cliente con sesión |
+| `api/orders/my-orders.php` | GET | cliente con sesión |
+| `api/support.php` | POST | cliente con sesión |
+| `api/events/log.php` | POST | público (eventos de la interfaz) |
+| `api/admin/orders.php`, `api/admin/events.php` | GET | solo administrador |
+| `api/health.php` | GET | público (comprobación de la base de datos) |
 
-Claves de `localStorage`: `planetaFicha.cart.v1`, `planetaFicha.orders.v1`, `planetaFicha.events.v1` y `planetaFicha.tickets.v1`.
+Todas las respuestas son JSON. Las peticiones que modifican datos exigen el token **CSRF** en la cabecera `X-CSRF-Token` y comprueban el origen (`sameOrigin`). El token se renueva al iniciar y cerrar sesión, y el identificador de sesión se regenera al entrar (`session_regenerate_id`).
 
-### Base de datos relacional (plantilla)
+## Seguridad
 
-`juegos_y_puzles.sql` es una plantilla de base de datos pensada para conectar la web en el futuro. **Todavía no está conectada** y no coincide con el catálogo actual de la web (ver "Problemas pendientes", apartado D). Incluye las tablas `productos`, `categorias`, `producto_categoria`, `origenes`, `producto_origen`, `usuarios`, `pedidos`, `lineas_pedido`, `pagos`, `direcciones_pedido`, `eventos` e `incidencias`.
+- **Importes y stock en el servidor:** subtotal, descuento, IVA y envío se recalculan con los precios de la base de datos; lo que envíe el navegador se ignora.
+- **Contraseñas y sesiones:** hash con `password_hash()`, cookie de sesión `HttpOnly`/`SameSite=Lax`/`Secure`, CSRF y roles comprobados en cada endpoint (`requireAuth`, `requireAdmin`).
+- **Consultas preparadas (PDO)** en todo el acceso a datos y escape de la salida con `safeText()` en el HTML.
+- **`.htaccess`:** bloquea desde el navegador (403) `config.php`, `config.mail.php`, `.env`, `health-debug.php` y los archivos `*.md`, `*.sql` y `*.py`; añade las cabeceras `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy` y una `Content-Security-Policy`. Las carpetas `api/lib`, `api/config`, `database` y `tests` tienen además su propio `.htaccess` con `Require all denied`. Estos bloqueos solo afectan al acceso HTTP: PHP sigue pudiendo leer esos archivos.
+- **Errores no visibles:** `display_errors` está desactivado y los errores van solo al log del servidor, para no filtrar rutas ni datos.
+- **Credenciales fuera de GitHub:** `api/config/config.php` (contraseña de MySQL y de SMTP) existe solo en el servidor. En el repositorio solo está `config.example.php`, y `.gitignore` excluye `api/config/config.php`, `config.mail.php` y `.env`. Si alguna vez se subió una contraseña real, hay que cambiarla.
+- **Correo SMTP cifrado:** puerto 465 con TLS directo; otros puertos con STARTTLS obligatorio. Se verifica el certificado y el nombre del host (el `host` debe coincidir con el del certificado). Si el servidor no ofrece STARTTLS, el envío se aborta antes de enviar usuario o contraseña. Las credenciales viajan en base64 solo **dentro** del canal ya cifrado; base64 no es cifrado.
+- **Antiabuso:** campo señuelo oculto en los formularios y comprobación de origen. No hay todavía límite de intentos de login (ver "Mejoras propuestas").
+- **Datos de prueba:** las cuentas de demostración que venían con la base de datos se han neutralizado y la cuenta de administrador de la entrega es propia del equipo; ninguna contraseña figura en el repositorio.
 
 ## Instrumentación de eventos
 
-Los eventos se generan en `logEvent()` (`js/events.js`) y se conservan en `planetaFicha.events.v1`. Cada registro lleva un identificador, marca temporal ISO, origen y payload en el navegador. El panel interno ofrece la consulta y una exportación JSON. El envío de pedido usa un endpoint PHP independiente y no conecta la base de datos SQL.
+Los eventos se generan en `logEvent()` (`js/events.js`), se envían a `api/events/log.php` y se guardan en la tabla `eventos` con identificador, marca temporal, origen y payload JSON. El administrador los consulta y exporta a JSON desde el back-office; en una segunda tarea podrían consumirse desde un endpoint de integración, una cola o un ETL hacia un ERP/CRM o analítica.
 
 Eventos incluidos: `product.viewed`, `cart.item_added`, `checkout.started`, `order.created`, `payment.simulated` y `support.requested`.
 
+## Pruebas automáticas
+
+Desde la raíz del proyecto:
+
+```bash
+python tests/virtual_e2e.py
+```
+
+Levanta el servidor integrado de PHP con el adaptador `mock` (archivo JSON en lugar de MySQL, con la misma API) y comprueba sesión y CSRF, protección del back-office, login y roles, registro, pedidos separados por usuario, cálculo en servidor, descuento de stock, eventos e incidencias, carga de `index.html` y componentes, e integración front-end/API. Algunas comprobaciones están ligadas al estado de `mock-db.json` y a la versión de caché concreta de cada entrega, por lo que pueden fallar tras actualizar `ASSET_VERSION` o la configuración sin que la web esté rota. Nunca debe usarse la configuración real para probar.
+
 ## Arquitectura y decisiones
 
-- **Interfaz:** `index.html` es un armazón que carga en tiempo de ejecución los fragmentos semánticos y accesibles de `components/`; `styles.css` contiene el diseño responsive.
-- **Comportamiento:** `app.js` define el estado (`state`), las referencias al DOM (`refs`), los toasts, la ficha de producto y la delegación de eventos de clic (`data-action`).
-- **Lógica de negocio:** repartida por módulos en `js/`: filtros y catálogo (`catalog.js`), cálculo comercial y carrito (`cart.js`), validación, creación del pedido y pago simulado (`checkout.js`), soporte (`support.js`), back-office (`admin.js`) e instrumentación (`events.js`).
-- **Persistencia:** una capa mínima con `readStorage()` y `persist()` (`js/utils.js`) encapsula `localStorage`.
-- **Seguridad de la salida:** todo dato mostrado en HTML pasa por `safeText()` para evitar inyección de código.
-- **Correo de pedidos:** `enviar-pedido.php` envía por SMTP autenticado y reconstruye precios y totales desde su catálogo permitido. Si se actualizan nombres o precios en `js/data/products.js`, actualiza también el catálogo PHP.
+- **Interfaz:** `index.html` es un armazón que carga en tiempo de ejecución los fragmentos de `components/`; `styles.css` contiene el diseño responsive. Un `[hidden]{display:none !important}` global garantiza que el atributo `hidden` oculte también elementos con `display` propio (botones).
+- **Comportamiento:** `app.js` define `state`, `refs`, toasts, ficha de producto y la delegación de clics (`data-action`).
+- **Lógica de negocio:** en el servidor (`api/lib/repository.php`: pedidos, stock, usuarios, eventos) y, en el navegador, por módulos de `js/`.
+- **Acceso a datos:** clase `PFDatabase` con PDO (MySQL) y un adaptador `mock` para pruebas.
+- **Alternativas consideradas:** un backend Node/Express con SQLite; se eligió PHP + MySQL por ser lo que ofrece el hosting contratado.
 
 ## Limitaciones conocidas
 
-- La persistencia del back-office es por navegador: no existe base de datos compartida ni autenticación. El correo enviado funciona como aviso y no como almacenamiento consultable.
-- Los datos del checkout se envían al buzón corporativo como aviso; usa únicamente datos ficticios y nunca datos reales de clientes.
-- El pago, transporte y disponibilidad se simulan; no hay comunicación con pasarela, proveedor ni inventario.
-- Es necesario servir la web desde un hosting con PHP y usar HTTPS para publicar pedidos; no funciona abriendo `index.html` directamente ni en hosting estático.
-- La base de datos SQL es solo una plantilla y no está conectada a la web.
-- Antes de publicar, crea o confirma el buzón SMTP corporativo. Copia `config.mail.example.php` como `config.mail.php`, introduce la contraseña SMTP y sube ambos scripts PHP más los archivos web al hosting. Sube `.htaccess` y no publiques SQL ni la clave SMTP.
+- El pago, el transporte y el envío son simulados; no hay pasarela de pago ni proveedor logístico.
+- El carrito está en `localStorage` (por navegador): no se sincroniza entre dispositivos.
+- Los precios del catálogo de respaldo (`products.js`) deben mantenerse iguales a mano a los de la base de datos; la base de datos manda.
+- No hay recuperación de contraseña, verificación del correo ni límite de intentos de acceso.
+- Los eventos crecen sin límite y las incidencias no se ven aún en el back-office.
+- Los datos de cliente son solo de demostración y nunca deben ser reales.
+- Es necesario ejecutar la web desde un servidor con PHP y MySQL; no funciona abriendo `index.html` directamente.
 
 ## Historial de cambios
 
@@ -175,79 +256,100 @@ Desarrollo en un único bloque: `index.html` con todas las vistas, `styles.css`,
 
 ### Evolución posterior
 
-1. **Modularización / factorización del código.** La interfaz se separa en `components/*.html` (cargados desde `index.html`) y la lógica en `js/` (catálogo, carrito, checkout, eventos, soporte, administración y utilidades). El catálogo pasa a `js/data/products.js`.
-2. **Botón flotante del carrito** (fase 1). Nuevo botón fijo en `components/header.html`, con contador sincronizado con el de la cabecera (`refs.floatingCartCount`). Se muestra cuando el botón de la cabecera sale de pantalla (`IntersectionObserver` en `initFloatingCart()` de `js/cart.js`), respeta el área segura de móviles y `prefers-reduced-motion`.
+1. **Modularización / factorización del código.** La interfaz se separa en `components/*.html` y la lógica en `js/`. El catálogo pasa a `js/data/products.js`.
+2. **Botón flotante del carrito.** Botón fijo en `components/header.html` con contador sincronizado (`IntersectionObserver` en `initFloatingCart()`), respetando el área segura de móviles y `prefers-reduced-motion`.
 3. **Catálogo con productos reales.** Sustitución de los productos de ejemplo por juegos y puzzles reales.
-4. **Revisión completa del código** (fase 3). Comprobación de sintaxis de todos los JS, cruce automático entre HTML, JS, CSS y datos, y revisión manual de la lógica. Los resultados están en la sección "Problemas pendientes".
-5. **Imágenes en el catálogo y en la ficha de producto.** Nueva carpeta `img/products/` con una foto por juego y campo `image` en `products.js`. `renderCatalog()` (`js/catalog.js`) y `openProduct()` (`app.js`) insertan la foto con un `<img>`. En el catálogo se rediseña la tarjeta: foto sobre fondo blanco arriba y título y subtítulo dentro de la franja de color de debajo, con los botones alineados en todas las tarjetas de una fila. En la ficha, la foto ocupa el panel izquierdo con el título en su recuadro de color. Los estilos usan las clases `has-image`.
-6. **Miniatura de imagen en el carrito.** Cada línea del carrito (`renderCart()` en `js/cart.js`) muestra la foto del producto en un recuadro de 56×56 px, con el símbolo de color como alternativa si la foto falla. La imagen es decorativa (`alt=""`), porque el título aparece al lado.
-7. **Aviso de prototipo más visible.** La franja superior "Prototipo académico" (`.prototype-strip`) aumenta de tamaño: texto de 11 a 14 px, altura mínima de 32 a 44 px, más espacio interior y un punto indicador mayor. En móvil, el texto pasa de 9 a 11 px.
+4. **Revisión completa del código** (fase 3). Comprobación de sintaxis, cruce entre HTML, JS, CSS y datos, y revisión manual de la lógica.
+5. **Imágenes en el catálogo y en la ficha.** Carpeta `img/products/`, campo `image` y rediseño de la tarjeta (foto arriba, título en la franja de color).
+6. **Miniatura de imagen en el carrito** (56×56 px, decorativa).
+7. **Aviso de prototipo más visible** (`.prototype-strip`: texto de 11 a 14 px y mayor altura; en móvil, de 9 a 11 px).
+8. **Variantes de producto** (`getVariants()`, `getProduct()`, `show-variant`): dos variantes adicionales de Ajedrez y dos de Catan.
+9. **Carrito en cookie** (versión anterior; sustituido más tarde por el carrito por usuario en `localStorage`).
+10. **Envío de pedidos e incidencias por correo (PHP)** con `enviar-pedido.php`, `enviar-incidencia.php` y `config.mail.php` (versión anterior, sustituida por la API; ver punto 14).
+11. **Protección de `config.mail.php` con `.htaccess`** (comprobado: 403 desde el navegador).
+12. **Cifrado SMTP:** TLS directo (465) o STARTTLS, con verificación del certificado y sin credenciales en claro.
+13. **Control de caché al publicar** con `ASSET_VERSION` y `?v=`.
+14. **Back-end con base de datos, login y roles** (trabajo del equipo). API PHP en `api/`, MySQL con las tablas descritas arriba, registro e inicio de sesión de clientes y administradores, carrito por usuario, pedidos con stock transaccional, eventos e incidencias en base de datos, back-office restringido a administradores, catálogo servido por `api/products.php` con respaldo estático y prueba virtual `tests/virtual_e2e.py`.
+
+### Correcciones y mejoras posteriores (5 de octubre de 2026)
+
+**Errores corregidos**
+
+- **Formularios de acceso con datos anteriores.** Los campos del login y del registro conservaban lo escrito antes (incluido un correo o contraseña ya usados). `js/auth.js` incorpora `resetAuthForms()`, que limpia ambos formularios al cerrar el diálogo, tras iniciar sesión, tras registrarse y al cerrar sesión.
+- **Filtro de jugadores incorrecto** (p. ej. Rush Hour no salía con "1 jugador"). `api/products.php` calcula ahora `solo`, `small` y `group` según el mínimo y máximo de jugadores de cada juego.
+- **Formulario de incidencias roto.** `components/support.html` había perdido su estructura y estilos; se restauran las clases `support-section`, `support-intro`, `support-form`, `support-honeypot` y `support-feedback`, con su CSS.
+- **Botón del back-office visible a todos.** `.button{display:inline-flex}` anulaba el atributo `hidden`; se añade la regla global `[hidden]{display:none !important}` en `styles.css`.
+- **Pie de página** centrado de nuevo (rejilla de tres columnas con marca a la izquierda, texto central y botón a la derecha; en móvil, una columna).
+
+**Seguridad y despliegue**
+
+- Nuevo `.htaccess` en la raíz (bloqueo de `config.php`, `config.mail.php`, `.env`, `health-debug.php`, `*.md`, `*.sql`, `*.py` y cabeceras de seguridad, con la CSP probada sin infracciones) y `api/lib/.htaccess` con `Require all denied`.
+- `display_errors` desactivado y `log_errors` activado en `api/lib/bootstrap.php`.
+- Eliminados del hosting `api/health-debug.php`, `enviar-pedido.php` y `enviar-incidencia.php`.
+- Cuentas de demostración neutralizadas, cuenta de administrador propia del equipo y **contraseña de MySQL rotada**; `config.php` editado solo en el servidor.
+- `.gitignore` con `api/config/config.php`, `config.mail.php` y `.env`.
+- `ASSET_VERSION` y `?v=` actualizados a `20261005-9`.
+
+**Funcionalidad**
+
+- **Avisos por correo de pedido e incidencia.** Ambos registros se guardan primero en la base de datos; luego `api/lib/mail.php` los notifica por SMTP compartido. Las respuestas `mailSent` se reflejan en el checkout y el formulario de incidencias, por lo que ya no se afirma que el aviso se envió cuando SMTP está apagado o lo rechaza.
+- **Protección del repositorio.** Se añade `.gitignore` para excluir `api/config/config.php`, `.env` y configuraciones SMTP locales; también se bloquea el acceso HTTP directo a las carpetas de configuración y biblioteca PHP.
+- **Configuración del buzón.** La plantilla incluye el destinatario corporativo y valores de conexión DonDominio de ejemplo. La contraseña queda fuera del repositorio y se introduce solo en la configuración privada del servidor.
+- **Precios del catálogo con IVA visible.** Se muestra el precio final con el 21 % incluido y debajo el importe sin IVA en las tarjetas, fichas, carrito y checkout. La lógica de cálculo y cobro del servidor no cambia.
+- **Mejora visual del catálogo y carrusel de ediciones.** Paleta pastel por producto con contraste oscuro, etiqueta de origen coordinada, flechas laterales con transición y actualización de imagen, descripción y precio al cambiar de variante. Se sincroniza la edición elegida con la ficha y con el producto que se añade al carrito.
+- **Selector de idioma español/inglés.** Se añade a la cabecera un botón con la bandera del idioma activo (España o Inglaterra); recuerda la preferencia en el navegador, traduce textos y etiquetas de la interfaz y localiza títulos, subtítulos y descripciones de los 16 productos. También ajusta el título de la pestaña, el idioma del documento, los precios y la búsqueda del catálogo. El contador numérico superpuesto sobre las imágenes de variantes se elimina; se conservan las flechas y los indicadores por puntos de la ficha.
+- **Selector de moneda EUR/USD/GBP.** Se añade una lista en la cabecera y se convierten los importes mostrados en las tarjetas, fichas, carrito, checkout y avisos. La moneda elegida se guarda en el navegador; el servidor y el pedido mantienen los cálculos en euros. Los cambios son de presentación con tasas fijas orientativas del BCE (05/10/2026), no una conversión en tiempo real ni una moneda de cobro.
+
+**Pendiente (decisión del equipo)**
+
+- Se decidió mantener la web hasta este punto. Quedan propuestas, sin implementar, en "Mejoras propuestas".
+
+## Mejoras propuestas (no implementadas)
+
+- **Límite de intentos:** bloqueos temporales (ventana deslizante) para login, registro, incidencias, pedidos y eventos, con tabla `limites_uso` e índice sobre `eventos.fecha_evento` (propuesta preparada en `database/migraciones/002_limites_y_eventos.sql`; el código asociado no está en la web).
+- **Registro:** reglas más estrictas de correo y contraseña.
+- **Tienda y back-office:** mostrar el stock en la ficha, listar las incidencias y retener/depurar eventos antiguos.
+- **Pasarela de pago:** valorar una integración de pruebas (sandbox); hoy el pago es solo simulado.
+- Erratas de `products.js` (`duartion` en las variantes en lugar de `duration`).
 
 ## Declaración de punto de partida y uso de IA
 
-Punto de partida: desarrollo nuevo, sin plantilla ni repositorio de terceros. La interfaz, datos ficticios y código se crearon como apoyo de IA generativa y requieren revisión, pruebas y comprensión del grupo antes de una entrega académica.
+Punto de partida: desarrollo nuevo, sin plantilla ni repositorio de terceros. La interfaz, los datos ficticios y el código se crearon con apoyo de IA generativa y requieren revisión, pruebas y comprensión del grupo antes de una entrega académica.
 
-Para el anexo de IA de la memoria, el grupo debe completar con honestidad: herramienta utilizada, tareas asistidas, fragmentos relevantes, errores detectados, cambios introducidos por el equipo y método de validación. Una recomendación de validación: probar manualmente el flujo completo, comprobar las entradas invalidadas, recargar el navegador para verificar persistencia y contrastar los eventos con los pedidos creados.
+Para el anexo de IA de la memoria, el grupo debe completar con honestidad: herramienta utilizada, tareas asistidas, fragmentos relevantes, errores detectados, cambios introducidos por el equipo y método de validación.
 
 ### Registro de las sesiones de revisión con IA (Claude)
 
-Este registro recoge únicamente lo tratado en las sesiones de revisión y corrección de las fases 1 a 3. El grupo debe completarlo con las tareas de la versión inicial y de la modularización, que no figuran aquí en detalle.
-
-- **Tareas asistidas:** botón flotante del carrito (fase 1); diagnóstico y corrección del filtrado del catálogo (fase 2); revisión completa del código y elaboración de la lista de problemas; integración de las imágenes de producto (tarjeta del catálogo, ficha y miniatura del carrito); ampliación del aviso de prototipo; actualización de este README.
-- **Errores detectados por la IA:** filtro "1 jugador" sin ningún producto; erratas en los datos; y los problemas listados en "Problemas pendientes".
-- **Cambios introducidos por el equipo:** integración de los productos reales, decisiones sobre categorías, corrección de tildes, actualización del hero y descarga y preparación de las fotos de los productos (formato, nombre y carpeta).
-- **Método de validación empleado:** comprobación automática de sintaxis de los JS, cruce entre archivos (IDs, selectores, acciones, clases CSS) y simulación de los filtros contra los datos de `products.js`. Las maquetas de la ficha y de la miniatura del carrito se comprobaron en un navegador (Chromium) con una foto de ejemplo, y después el equipo las verificó en la web real. **Pendiente:** validación manual en navegador (ver apartado E).
+- **Tareas asistidas:** botón flotante del carrito; corrección del filtrado del catálogo; revisión completa del código; imágenes de producto; aviso de prototipo; variantes; carrito en cookie; integración de los endpoints PHP y del correo; protección de `config.mail.php`; cifrado TLS/STARTTLS; control de caché; **diagnóstico y corrección de los cuatro errores del proyecto con base de datos y login; recentrado del pie de página; auditoría de ciberseguridad, UX y base de datos; endurecimiento (`.htaccess`, errores ocultos, archivos de depuración eliminados, credenciales y `.gitignore`); aviso por correo de cada pedido; actualización de este README.**
+- **Errores detectados por la IA:** filtro "1 jugador" sin productos; erratas en los datos; los problemas de las revisiones anteriores; y, en la última fase, los cuatro errores indicados arriba, el atributo `hidden` anulado por el CSS, la exposición de archivos de configuración/depuración y la visualización de errores de PHP.
+- **Cambios introducidos por el equipo:** productos reales y fotos; el back-end (API, base de datos, login y roles); contratación y configuración del hosting; subida de archivos, rotación de contraseñas y pruebas en la web publicada (incluidos los 403 de los archivos protegidos, la redirección a HTTPS y la recepción del correo de pedido).
+- **Método de validación empleado:** comprobación de sintaxis y cruce entre archivos; los errores se reprodujeron antes y después de corregirlos con un navegador automatizado (Chromium); la CSP se probó sin infracciones; el envío de correo se probó contra servidores SMTP de prueba (TLS directo, STARTTLS, rechazo de conexiones sin cifrar y de certificados no válidos); la prueba `tests/virtual_e2e.py` se ejecutó con el adaptador `mock`; y el equipo verificó cada cambio en la web real.
+- **Revisión SMTP asistida por Codex (5 de octubre de 2026):** se comprobó que los PHP anteriores no correspondían a los endpoints de la versión con base de datos y que la configuración SMTP local no contenía credenciales. Se actualizó la integración compartida de pedidos/incidencias, el estado visible de envío, la plantilla de configuración, la guía de despliegue y las exclusiones/protecciones para secretos. El equipo aún debe introducir la contraseña del buzón solo en la configuración privada del hosting y verificar la recepción real; este cambio no incluye ni declara validada esa contraseña.
 
 ## Problemas pendientes
 
-Resultado de la revisión de la fase 3. Marcar cada punto con `[x]` cuando se resuelva.
+Marcar cada punto con `[x]` cuando se resuelva. Los puntos A1-A4 de la revisión anterior se han reevaluado con la web actual y siguen pendientes de confirmar.
 
-### A. Bugs reales (prioridad alta)
+### A. Posibles bugs de la interfaz (revisar)
 
-- [ ] **A1. El total mostrado no coincide con el cobrado (checkout)** — `js/checkout.js`, `app.js`.
-  Al abrir el checkout, los totales se calculan sin código promocional (`calculateCart()`), pero el campo "Código promocional" conserva lo escrito anteriormente. Además, `createOrder()` no hace `form.reset()` al terminar, así que quedan rellenos los datos del pedido anterior. Si el campo mantiene `YUZU10`, se muestra el total sin descuento y al enviar se aplica.
-  *Solución propuesta:* hacer `form.reset()` al abrir el checkout o tras crear el pedido, o calcular los totales con el valor actual del campo (`calculateCart(promoInput.value)`).
-
-- [ ] **A2. Carrito con productos que ya no existen** — `js/cart.js`, `js/checkout.js`.
-  Si en `localStorage` queda un producto eliminado del catálogo (por ejemplo, Hanamikoji), `cartLines()` lo oculta, pero `openCheckout()` comprueba `state.cart.length`. Se abre un checkout vacío y `createOrder()` puede crear un pedido sin líneas y con total 0 EUR.
-  *Solución propuesta:* al arrancar, filtrar `state.cart` dejando solo productos existentes y guardarlo de nuevo; validar con `cartLines().length` en `openCheckout()` y `createOrder()`.
-
-- [ ] **A3. El checkout se cierra al hacer clic en su margen** — `app.js`, `styles.css`.
-  `.checkout-dialog` tiene `padding: 30px 34px 35px` y el manejador de cierre usa `event.target === dialog`, por lo que un clic en ese margen se interpreta como clic en el fondo, cierra el diálogo y se pierde lo escrito.
-  *Solución propuesta:* cerrar solo si el clic queda fuera del rectángulo del diálogo (`getBoundingClientRect()`).
-
-- [ ] **A4. `persist()` sin `try/catch` y eventos sin límite** — `js/utils.js`, `js/events.js`.
-  `localStorage.setItem` puede lanzar una excepción si el almacenamiento está lleno o bloqueado (por ejemplo, en modo privado), interrumpiendo operaciones a medias (como `addToCart`). Además, `state.events` crece sin tope.
-  *Solución propuesta:* envolver `persist()` en `try/catch` con aviso al usuario, limitar el registro (por ejemplo, a los 200 últimos eventos) y validar en `readStorage()` que el valor leído es un array.
+- [ ] **A1. El checkout se cierra al hacer clic en su margen** (`app.js`): cerrar solo si el clic queda fuera del rectángulo del diálogo (`getBoundingClientRect()`).
+- [ ] **A2. `persist()` sin `try/catch`** (`js/utils.js`): puede lanzar excepción si `localStorage` está lleno o bloqueado; validar también en `readStorage()` que el valor es un array.
 
 ### B. Accesibilidad
 
-- [ ] **B1. Carrito lateral** — `components/cart.html`, `js/cart.js`, `styles.css`.
-  Usa `aria-hidden="true"` cerrado, pero sus botones siguen siendo enfocables con el teclado (está desplazado fuera de pantalla). Tampoco se cierra con Escape ni gestiona el foco al abrir y cerrar.
-  *Solución propuesta:* usar el atributo `inert` cuando está cerrado, cerrar con Escape y mover/devolver el foco.
-
-- [ ] **B2. Botones del carrito** — `components/header.html`.
-  Hay dos botones con la misma etiqueta "Abrir carrito" y el flotante no anuncia cuántos artículos hay.
-  *Solución propuesta:* incluir el número en `aria-label` y actualizarlo en `renderCart()`.
+- [ ] **B1. Carrito lateral:** cerrado sigue enfocable con el teclado; usar `inert`, cerrar con Escape y gestionar el foco.
+- [ ] **B2. Botones del carrito:** dos botones con la misma etiqueta "Abrir carrito"; incluir el número de artículos en `aria-label`.
 
 ### C. Detalles menores
 
-- [ ] **C1. Datos del pedido** — `js/checkout.js`, `js/support.js`.
-  `promoCode` guarda el texto escrito aunque no sea exacto (debería guardarse solo `YUZU10`). Los importes se guardan sin redondear a 2 decimales. El identificador de pedido (`PM-año-` + últimos 6 dígitos de `Date.now()`) puede repetirse pasados unos 16 minutos, y lo mismo ocurre con los tickets `SUP-xxxxxx`. Añadir un sufijo aleatorio.
+- [ ] **C1.** `promoCode` guarda el texto escrito aunque no sea exacto; los importes deberían redondearse a 2 decimales.
+- [ ] **C2.** Textos del hero ("12 referencias", "6 países") escritos a mano; unificar el contador del catálogo ("1 referencia encontrada" / "N referencias seleccionadas").
+- [ ] **C3. Back-office:** las tarjetas de "Modelo de datos" no reflejan todos los campos reales.
 
-- [ ] **C2. Contenido y textos.**
-  Los valores "12 referencias" y "6 países" del hero están escritos a mano y podrían calcularse desde `products`. El contador del catálogo dice "1 referencia encontrada" con un resultado y "N referencias seleccionadas" con más: unificar criterio. En Let's Catch the Lion!, "iniciación" no es una mecánica de juego.
+### D. Otras tareas pendientes
 
-- [ ] **C3. Back-office** — `js/admin.js`.
-  Las tarjetas de "Modelo de datos" no reflejan todos los campos reales: en Producto faltan `subtitle`, `duration`, `playerFilter`, `tone`, `text`, `symbol`, `description` y `language`; en Pedido faltan `payment` y `statusHistory`.
-
-
-### D. Base de datos (`juegos_y_puzles.sql`) — para cuando se conecte
-
-- [ ] Actualizar la base de datos para su posterior conexión a la web.
-
-### E. Otras tareas pendientes
-
-- [ ] Probar en navegador cada filtro (categoría, jugadores, dificultad y búsqueda), el flujo completo de compra, la persistencia tras recargar y la vista móvil.
-- [ ] Completar el anexo de IA de la memoria (ver sección "Declaración de punto de partida y uso de IA").
+- [ ] Probar en navegador cada filtro, el flujo completo de compra y la vista móvil tras cada cambio.
+- [ ] Comprobar que ningún `config.php`/`config.mail.php` con datos reales **está** en GitHub ni en su historial (si lo estuvo, cambiar las contraseñas de MySQL y del buzón).
+- [ ] Decidir con el equipo si se adopta alguna de las "Mejoras propuestas".
+- [ ] Completar el anexo de IA de la memoria.
 - [ ] Anotar en la memoria la procedencia y licencia de las fotos de `img/products/` (las portadas de juegos suelen tener derechos de autor; al ser un prototipo sin fines comerciales, basta con citar la fuente).

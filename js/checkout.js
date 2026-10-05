@@ -1,168 +1,117 @@
+function orderStatusLabel(status) {
+  return ({
+    pendiente: 'Pendiente',
+    pagado: 'Pago confirmado',
+    preparando: 'En preparación',
+    enviado: 'Enviado',
+    entregado: 'Entregado',
+    cancelado: 'Cancelado',
+  })[status] || status || 'Pendiente';
+}
+
+function renderCheckoutItems() {
+  const items = refs.checkoutDialog.querySelector('#checkout-items');
+  if (!items) return;
+  items.innerHTML = cartLines()
+    .map(({ product, quantity }) => {
+      const displayProduct = localizeProduct(product);
+      return `<div class="checkout-product"><span>${quantity}× ${safeText(displayProduct.title)}</span>${priceBreakdownMarkup(product.price * quantity)}</div>`;
+    })
+    .join('');
+}
+
 function openCheckout() {
+  const user = currentUser();
+  if (!user) {
+    promptAuth('Para realizar una compra primero debes registrarte o iniciar sesión.');
+    return;
+  }
   if (!cartLines().length) {
-    showToast("Añade al menos una referencia antes de continuar.");
+    showToast('Añade al menos una referencia antes de continuar.');
     return;
   }
 
   closeCart();
   const checkout = refs.checkoutDialog;
-
-  checkout.querySelector("#checkout-items").innerHTML =
-    cartLines().map(({ product, quantity }) => `
-      <div class="checkout-product">
-        <span>${quantity}× ${safeText(product.title)}</span>
-        <b>${formatPrice(product.price * quantity)}</b>
-      </div>
-    `).join("");
-
-  checkout.querySelector("#checkout-totals").innerHTML =
-    renderTotals(calculateCart(checkout.querySelector("[name=promo]").value));
-  checkout.querySelector("#checkout-error").textContent = "";
-
-  logEvent("checkout.started", {
+  const form = checkout.querySelector('#checkout-form');
+  const name = form.querySelector('[name="customerName"]');
+  const email = form.querySelector('[name="email"]');
+  if (!name.value.trim()) name.value = `${user.firstName} ${user.lastName}`.trim();
+  email.value = user.email;
+  renderCheckoutItems();
+  checkout.querySelector('#checkout-totals').innerHTML = renderTotals(calculateCart(form.querySelector('[name="promo"]').value));
+  checkout.querySelector('#checkout-error').textContent = '';
+  logEvent('checkout.started', {
     cartLines: cartLines().length,
-    itemCount: cartLines().reduce((sum, item) => sum + item.quantity, 0)
+    itemCount: cartLines().reduce((sum, item) => sum + item.quantity, 0),
   });
-
   checkout.showModal();
 }
 
 function updateCheckoutTotals() {
-  const promo = refs.checkoutDialog.querySelector("[name=promo]").value;
-  refs.checkoutDialog.querySelector("#checkout-totals").innerHTML =
-    renderTotals(calculateCart(promo));
+  const promo = refs.checkoutDialog.querySelector('[name="promo"]').value;
+  refs.checkoutDialog.querySelector('#checkout-totals').innerHTML = renderTotals(calculateCart(promo));
 }
 
 async function createOrder(form) {
-  const fields = new FormData(form);
-  const data = Object.fromEntries(fields.entries());
-  const error = refs.checkoutDialog.querySelector("#checkout-error");
-  const submit = form.querySelector('[type="submit"]');
-
-  const required = ["customerName", "email", "address", "postalCode", "city", "paymentMethod"];
-  const invalid =
-    required.some(name => !data[name]?.trim()) ||
-    !/^\S+@\S+\.\S+$/.test(data.email) ||
-    !/^\d{5}$/.test(data.postalCode) ||
-    data.customerName.trim().length < 3 ||
-    data.address.trim().length < 8;
-
-  if (invalid) {
-    error.textContent =
-      "Revisa los campos: utiliza datos ficticios válidos, un correo con formato correcto y un código postal de 5 cifras.";
+  const user = currentUser();
+  const error = refs.checkoutDialog.querySelector('#checkout-error');
+  if (!user) {
+    promptAuth('Tu sesión ha terminado. Regístrate o inicia sesión para continuar con la compra.');
     return;
   }
 
-  if (!cartLines().length) {
-    error.textContent = "El carrito está vacío. Añade productos y vuelve a intentarlo.";
-    return;
-  }
-
+  const data = Object.fromEntries(new FormData(form).entries());
   if (data.website?.trim()) return;
+  const name = (data.customerName || '').trim() || `${user.firstName} ${user.lastName}`.trim();
+  if (!data.address?.trim() || !/^\d{5}$/.test(data.postalCode || '')
+    || (data.city || '').trim().length < 2 || !name || !data.paymentMethod) {
+    error.textContent = 'Revisa los campos de entrega y el método de pago.';
+    return;
+  }
+  if (!cartLines().length) {
+    error.textContent = 'El carrito está vacío.';
+    return;
+  }
 
-  const totals = calculateCart(data.promo || "");
-  const now = new Date();
-  const order = {
-    id: `PM-${now.getFullYear()}-${String(Date.now()).slice(-6)}`,
-    createdAt: now.toISOString(),
-    customer: {
-      name: data.customerName.trim(),
-      email: data.email.trim(),
-      address: data.address.trim(),
-      postalCode: data.postalCode.trim(),
-      city: data.city.trim()
-    },
-    items: cartLines().map(({ product, quantity }) => ({
-      productId: product.id,
-      title: product.title,
-      unitPrice: product.price,
-      quantity
-    })),
-    payment: {
-      method: data.paymentMethod,
-      status: "Simulado autorizado",
-      reference: `SIM-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
-    },
-    totals,
-    promoCode: data.promo.trim().toUpperCase() === "YUZU10" ? "YUZU10" : null,
-    status: "Pendiente de preparación",
-    statusHistory: [
-      { status: "Creado", at: now.toISOString() },
-      { status: "Pago simulado", at: now.toISOString() },
-      { status: "Pendiente de preparación", at: now.toISOString() }
-    ]
-  };
-
+  const submit = form.querySelector('[type="submit"]');
   submit.disabled = true;
-  error.textContent = "Enviando el resumen del pedido…";
-
+  error.textContent = 'Guardando el pedido y enviando el aviso…';
   try {
-    const response = await fetch("./enviar-pedido.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "same-origin",
-      cache: "no-store",
+    const result = await apiRequest('./api/orders/create.php', {
+      method: 'POST',
       body: JSON.stringify({
-        orderId: order.id,
-        customer: order.customer,
-        items: order.items.map(({ productId, quantity }) => ({ productId, quantity })),
-        paymentMethod: order.payment.method,
-        promoCode: order.promoCode || "",
-        website: data.website || ""
-      })
+        customer: {
+          name,
+          email: user.email,
+          address: data.address.trim(),
+          postalCode: data.postalCode.trim(),
+          city: data.city.trim(),
+        },
+        items: cartLines().map(({ product, quantity }) => ({
+          productId: Number(product.id),
+          quantity: Number(quantity),
+        })),
+        paymentMethod: data.paymentMethod,
+        promoCode: (data.promo || '').trim().toUpperCase() === 'YUZU10' ? 'YUZU10' : '',
+      }),
     });
 
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(result.error || "No se pudo enviar el pedido.");
-
-    order.createdAt = result.order.createdAt || order.createdAt;
-    order.items = result.order.items.map(item => ({
-      productId: item.productId,
-      title: item.title,
-      unitPrice: Number(item.unitPrice),
-      quantity: Number(item.quantity)
-    }));
-    order.totals = result.order.totals;
-
-    state.orders.unshift(order);
-    try {
-      persist(STORAGE.orders, state.orders);
-    } catch (storageError) {
-      console.warn("El pedido llegó por correo, pero no se pudo guardar en este navegador.", storageError);
-    }
-
-    try {
-      logEvent("order.created", {
-        orderId: order.id,
-        total: Number(order.totals.total.toFixed(2)),
-        lineCount: order.items.length
-      });
-      logEvent("payment.simulated", {
-        orderId: order.id,
-        method: order.payment.method,
-        paymentStatus: order.payment.status,
-        reference: order.payment.reference
-      });
-    } catch (storageError) {
-      console.warn("El pedido llegó por correo, pero no se pudieron guardar todos los eventos locales.", storageError);
-    }
-
     state.cart = [];
-    try {
-      persist(STORAGE.cart, state.cart);
-    } catch (storageError) {
-      console.warn("El pedido llegó por correo, pero no se pudo guardar el carrito vacío.", storageError);
-    }
+    persistCartForUser([]);
     renderCart();
-
+    if (typeof renderAccountOrders === 'function') renderAccountOrders();
     refs.checkoutDialog.close();
-    refs.successDialog.querySelector("#success-copy").textContent =
-      `El resumen del pedido ${order.id}, por ${formatPrice(order.totals.total)}, se ha enviado a correocorporativo@planetaficha.onl. El pago es solo una simulación; no se ha realizado ningún cobro.`;
+
+    const order = result.order;
+    const notification = result.mailSent
+      ? 'El servidor de correo aceptó el aviso corporativo.'
+      : 'El pedido está guardado, pero no se pudo enviar el aviso por correo. Se conserva en la base de datos; avisa al administrador.';
+    refs.successDialog.querySelector('#success-copy').textContent =
+      `El pedido ${order.id} se ha guardado correctamente. Total: ${formatPrice(order.totals.total)}. El pago es una simulación y no se ha realizado ningún cobro. ${notification}`;
     refs.successDialog.showModal();
   } catch (requestError) {
-    error.textContent =
-      requestError.message ||
-      "No se pudo enviar el pedido. El carrito sigue guardado; inténtalo de nuevo más tarde.";
+    error.textContent = requestError.message || 'No se pudo crear el pedido.';
   } finally {
     submit.disabled = false;
   }
