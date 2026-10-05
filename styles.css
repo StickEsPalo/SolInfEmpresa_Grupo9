@@ -2739,3 +2739,102 @@ h2 em {
     align-items: center;
   }
 }
+
+@media (max-width: 1100px) {
+  .site-header {
+    gap: 12px;
+    padding-inline: 20px;
+  }
+
+  .site-header nav {
+    display: none;
+  }
+
+  .mobile-menu-toggle {
+    display: block;
+  }
+
+  .mobile-menu.is-open {
+    display: flex;
+    flex-direction: column;
+    padding: 18px 22px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .mobile-menu a {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+    font-weight: 600;
+  }
+}
+
+@media (max-width: 700px) {
+  .site-header {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px 6px;
+    padding: 14px 16px;
+  }
+
+  .site-header > .brand {
+    grid-column: 1 / -1;
+    justify-self: center;
+  }
+
+  .site-header > button,
+  .site-header > .currency-control {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .site-header > button,
+  .site-header .currency-select {
+    min-height: 44px;
+    padding: 6px 4px;
+  }
+
+  .site-header .currency-select {
+    width: 100%;
+    min-width: 0;
+    font-size: 11px;
+  }
+
+  .site-header .language-toggle {
+    gap: 4px;
+  }
+
+  .site-header .language-flag {
+    width: 20px;
+    height: 14px;
+  }
+
+  .site-header .account-button,
+  .site-header .cart-button {
+    justify-content: center;
+    gap: 4px;
+    font-size: 0;
+  }
+
+  .site-header #account-button-label {
+    display: none;
+  }
+
+  .site-header .account-button span:first-child,
+  .site-header .cart-button span {
+    font-size: 18px;
+  }
+
+  .site-header .cart-button b {
+    font-size: 11px;
+  }
+}
+.search-field:focus-within {
+  outline: 2px solid var(--ink);
+  outline-offset: 4px;
+}
+
+.catalog-section button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
