@@ -224,18 +224,19 @@ h2 em {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px /* 9px */;
-  min-height: 44px /* 32px */;
-  padding: 10px /* 6px */ 16px;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px 16px;
   background: var(--ink);
   color: var(--paper);
-  font: 500 14px/1.4 /* 11px/1 */ var(--mono);
+  font: 500 14px/1.4 var(--mono);
   letter-spacing: 0.08em;
   text-align: center;
 }
+
 .pulse-dot {
-  width: 9px /* 7px */;
-  height: 9px /* 7px*/ ;
+  width: 9px;
+  height: 9px;
   background: var(--coral);
   border-radius: 50%;
   box-shadow: 0 0 0 4px rgba(237, 118, 88, 0.18);
@@ -2007,171 +2008,185 @@ h2 em {
     padding: 13px 20px;
     gap: 14px;
   }
-  .site-header nav {
-    display: none;
-  }
+
   .hero {
     grid-template-columns: 1fr;
     min-height: auto;
     padding: 58px 32px 0;
     border-radius: 0;
   }
+
   .hero-art {
     min-height: 320px;
     margin-top: 21px;
   }
+
   .hero-facts {
     margin-top: 40px;
   }
+
   .sun {
     width: 190px;
     height: 190px;
   }
+
   .box-one {
     right: 13%;
     bottom: 13%;
   }
+
   .box-two {
     right: 44%;
     bottom: 8%;
   }
+
   .trust-row {
     grid-template-columns: 1fr;
     gap: 18px;
     padding: 28px 29px;
   }
+
   .section-shell {
     padding-left: 22px;
     padding-right: 22px;
   }
+
   .catalog-section {
     padding-top: 51px;
     padding-bottom: 56px;
   }
+
   .section-intro {
     display: block;
     margin-bottom: 25px;
   }
+
   .section-intro > p {
     margin-top: 18px;
   }
+
   .filters {
     grid-template-columns: 1fr;
     gap: 15px;
   }
+
   .filters:not(.is-visible) {
     display: none;
   }
+
   .product-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 27px 12px;
   }
+
   .product-image {
     min-height: 180px;
     padding: 13px;
   }
+
   .product-image h3 {
     font-size: 25px;
   }
+
   .product-origin {
     top: 12px;
     right: 9px;
     font-size: 7px;
   }
+
   .experience-layout,
   .trace-section,
   .support-section {
     grid-template-columns: 1fr;
     gap: 34px;
   }
+
   .experience-section {
     padding: 56px 0;
   }
+
   .trace-section {
     padding-top: 64px;
     padding-bottom: 71px;
   }
+
   .event-preview {
     min-height: 280px;
   }
+
   .support-section {
     padding-top: 51px;
     padding-bottom: 56px;
   }
+
   .site-footer {
     display: grid;
     grid-template-columns: 1fr;
     justify-items: start;
     padding: 30px 22px;
   }
+
   .site-footer button {
     justify-self: start;
   }
+
   .site-footer p {
     text-align: left;
   }
+
   .product-dialog > div,
   .checkout-layout {
     grid-template-columns: 1fr;
   }
+
   .dialog-product-image {
     min-height: 250px;
   }
+
   .dialog-product-image strong {
     font-size: 46px;
   }
+
   .dialog-product-content {
     padding: 24px;
   }
+
   .checkout-dialog,
   .admin-dialog {
     padding: 23px 19px 26px;
   }
+
   .checkout-order {
     order: -1;
   }
+
   .admin-stats {
     grid-template-columns: 1fr 1fr;
   }
+
   .admin-stat:nth-child(2) {
     border-right: 0;
   }
+
   .admin-stat:nth-child(-n + 2) {
     border-bottom: 1px solid var(--line);
   }
+
   .model-grid {
     grid-template-columns: 1fr;
   }
+
   .orders-table,
   .events-table {
     min-width: 640px;
   }
+
   .admin-panel {
     overflow-x: auto;
   }
+
   .success-dialog {
     padding: 34px 24px;
-  }
-  .mobile-menu-toggle {
-    display: block;
-  }
-
-  .mobile-menu {
-    display: none;
-    flex-direction: column;
-    padding: 18px 22px;
-    background: var(--paper);
-    border-bottom: 1px solid var(--line);
-  }
-
-  .mobile-menu.is-open {
-    display: flex;
-  }
-
-  .mobile-menu a {
-    padding: 12px 0;
-    border-bottom: 1px solid var(--line);
-    font-weight: 600;
   }
 }
 
@@ -2179,83 +2194,62 @@ h2 em {
 /* RESPONSIVE - MÓVIL PEQUEÑO (max-width: 430px) */
 /*==========================================================================*/
 @media (max-width: 430px) {
-  .site-header {
-    gap: 9px;
-    padding-right: 15px;
-    padding-left: 15px;
-  }
-  .language-toggle {
-    gap: 5px;
-    min-height: 36px;
-    padding: 6px 8px;
-  }
-  .language-flag {
-    width: 20px;
-    height: 14px;
-  }
-  .currency-control {
-    gap: 0;
-  }
-  .currency-select {
-    width: 43px;
-    min-height: 36px;
-    padding: 5px 3px;
-    font-size: 9px;
-  }
   .prototype-strip {
-    font-size: 11px /* 9px */;
+    font-size: 11px;
   }
-  .cart-button {
-    padding: 9px;
-    font-size: 0;
-  }
-  .cart-button span,
-  .cart-button b {
-    font-size: 14px;
-  }
-  .cart-button b {
-    font-size: 10px;
-  }
+
   .hero {
     padding-left: 22px;
     padding-right: 22px;
   }
+
   .hero-actions {
     align-items: flex-start;
     flex-direction: column;
     gap: 15px;
   }
+
   .hero-facts {
     gap: 15px;
   }
+
   .hero-facts div {
     padding-right: 15px;
   }
+
   .product-grid {
     grid-template-columns: 1fr 1fr;
   }
+
   .product-details {
     align-items: flex-start;
   }
+
   .product-details p {
     margin-bottom: 3px;
   }
+
   .card-actions {
     grid-template-columns: 1fr;
   }
+
   .card-actions button {
     font-size: 10px;
   }
+
   .form-grid {
     grid-template-columns: 1fr;
   }
+
   .full-width {
     grid-column: auto;
   }
+
   .checkout-dialog {
     width: 100vw;
     max-height: 100dvh;
   }
+
   .dialog-product-content h2 {
     font-size: 36px;
   }
@@ -2754,12 +2748,16 @@ h2 em {
     display: block;
   }
 
-  .mobile-menu.is-open {
-    display: flex;
+  .mobile-menu {
+    display: none;
     flex-direction: column;
     padding: 18px 22px;
     background: var(--paper);
     border-bottom: 1px solid var(--line);
+  }
+
+  .mobile-menu.is-open {
+    display: flex;
   }
 
   .mobile-menu a {
@@ -2784,8 +2782,8 @@ h2 em {
 
   .site-header > button,
   .site-header > .currency-control {
-    min-width: 0;
     width: 100%;
+    min-width: 0;
   }
 
   .site-header > button,
@@ -2829,6 +2827,10 @@ h2 em {
     font-size: 11px;
   }
 }
+
+/*==========================================================================*/
+/* ACCESIBILIDAD - FOCO VISIBLE */
+/*==========================================================================*/
 .search-field:focus-within {
   outline: 2px solid var(--ink);
   outline-offset: 4px;
