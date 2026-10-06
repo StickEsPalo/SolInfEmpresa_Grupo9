@@ -1,0 +1,1 @@
+<?php require_once __DIR__.'/lib/bootstrap.php'; requestMethod('GET'); try{$test=db()->products(); apiRespond(['ok'=>true,'database'=>'connected','driver'=>($config['db']['driver']??'unknown'),'products'=>count($test)]);}catch(Throwable $e){error_log('[PlanetaFicha health] '.$e->getMessage());apiRespond(['ok'=>false,'database'=>'error'],500);}
