@@ -75,5 +75,11 @@ document.querySelectorAll(".filter-pills").forEach(group=>group.addEventListener
 document.querySelector("#checkout-form").addEventListener("submit",e=>{e.preventDefault();createOrder(e.currentTarget);});
 document.querySelector("#checkout-form [name=promo]").addEventListener("input",updateCheckoutTotals);
 document.querySelector("#support-form").addEventListener("submit",e=>{e.preventDefault();supportRequested(e.currentTarget);});
-[refs.productDialog,refs.checkoutDialog,refs.successDialog,refs.adminDialog].forEach(d=>d?.addEventListener("click",e=>{if(e.target===d)d.close();}));
+[refs.productDialog, refs.successDialog, refs.adminDialog].forEach(dialog => {
+  dialog?.addEventListener("click", event => {
+    if (event.target === dialog) {
+      dialog.close();
+    }
+  });
+});
 renderCatalog();syncCartForCurrentUser();renderEventPreview();initFloatingCart();updateRoleUI();
