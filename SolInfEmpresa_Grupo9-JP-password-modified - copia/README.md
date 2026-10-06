@@ -95,15 +95,7 @@ SolInfEmpresa_Grupo9-JP/
 
 - **Hay que iniciar sesión** para añadir productos al carrito y hacer el pedido. El registro crea cuentas con rol `cliente` (nombre y apellidos con mayúscula inicial, correo con `@` que termine en `.com` y contraseña que empiece por mayúscula, con al menos 6 caracteres y un número); el rol `administrador` da acceso al back-office ("Panel de evidencias").
 - Las contraseñas se guardan con `password_hash()` y se comprueban con `password_verify()`. Los administradores se crean directamente en la base de datos.
-
-### Cuentas de prueba
-
-| Tipo | Acceso | Qué permite |
-| --- | --- | --- |
-| **Usuario de prueba (cliente)** | Creación de cuentas **habilitada**: cualquier persona puede registrarse desde "Iniciar sesión" → "Crear cuenta" (con las reglas de registro indicadas arriba) | Añadir al carrito, hacer pedidos de demostración, enviar incidencias y consultar "Mis pedidos" |
-| **Usuario de prueba (administrador / desarrollador)** | Correo: `admin@example.com` Contraseña: `admin123` | Acceso **solo de consulta** al funcionamiento del back-office ("Panel de evidencias": pedidos y eventos). No permite editar datos, ni acceder al código, a los ajustes de la web, de la base de datos o del hosting, ni ningún otro permiso |
-
-Estas credenciales de administrador son de uso público, solo para la evaluación del prototipo. No son las cuentas del hosting, de la base de datos ni del correo corporativo, cuyas contraseñas nunca se publican.
+- **Las credenciales de las cuentas (administrador, demostración) no se publican en este archivo ni en GitHub.** Se entregan por separado para la evaluación.
 - En el checkout deben introducirse datos ficticios. Ejemplo: nombre `Ada Lovelace`, dirección `C/ Ejemplo, 42`, código postal `28001`, ciudad `Madrid`. Promoción opcional: `YUZU10` (10 % de descuento simulado).
 
 ## Correo corporativo
@@ -220,7 +212,7 @@ Todas las respuestas son JSON. Las peticiones que modifican datos exigen el toke
 - **Credenciales fuera de GitHub:** `api/config/config.php` (contraseña de MySQL y de SMTP) existe solo en el servidor. En el repositorio solo está `config.example.php`, y `.gitignore` excluye `api/config/config.php`, `config.mail.php` y `.env`. Si alguna vez se subió una contraseña real, hay que cambiarla.
 - **Correo SMTP cifrado:** puerto 465 con TLS directo; otros puertos con STARTTLS obligatorio. Se verifica el certificado y el nombre del host (el `host` debe coincidir con el del certificado). Si el servidor no ofrece STARTTLS, el envío se aborta antes de enviar usuario o contraseña. Las credenciales viajan en base64 solo **dentro** del canal ya cifrado; base64 no es cifrado.
 - **Antiabuso:** campo señuelo oculto en los formularios y comprobación de origen. No hay todavía límite de intentos de login (ver "Mejoras propuestas").
-- **Datos de prueba:** las cuentas de demostración que venían con la base de datos se han neutralizado. La cuenta de administrador de pruebas (ver "Cuentas de prueba") es de solo consulta y su contraseña es pública a propósito; las contraseñas de MySQL, del hosting y del correo corporativo no figuran en el repositorio.
+- **Datos de prueba:** las cuentas de demostración que venían con la base de datos se han neutralizado y la cuenta de administrador de la entrega es propia del equipo; ninguna contraseña figura en el repositorio.
 
 ## Instrumentación de eventos
 
@@ -294,7 +286,7 @@ Desarrollo en un único bloque: `index.html` con todas las vistas, `styles.css`,
 - Nuevo `.htaccess` en la raíz (bloqueo de `config.php`, `config.mail.php`, `.env`, `health-debug.php`, `*.md`, `*.sql`, `*.py` y cabeceras de seguridad, con la CSP probada sin infracciones) y `api/lib/.htaccess` con `Require all denied`.
 - `display_errors` desactivado y `log_errors` activado en `api/lib/bootstrap.php`.
 - Eliminados del hosting `api/health-debug.php`, `enviar-pedido.php` y `enviar-incidencia.php`.
-- Cuentas de demostración neutralizadas, cuenta de administrador de pruebas de solo consulta (documentada en "Cuentas de prueba") y **contraseña de MySQL rotada**; `config.php` editado solo en el servidor.
+- Cuentas de demostración neutralizadas, cuenta de administrador propia del equipo y **contraseña de MySQL rotada**; `config.php` editado solo en el servidor.
 - `.gitignore` con `api/config/config.php`, `config.mail.php` y `.env`.
 - `ASSET_VERSION` y `?v=` actualizados a `20261005-9`.
 
