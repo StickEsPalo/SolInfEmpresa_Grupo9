@@ -423,7 +423,7 @@ function localizeProduct(product) {
 }
 
 function localeForLanguage() {
-  return currentLanguage === "en" ? "en-GB" : "es-ES";
+  return currentLanguage === "en" ? "en-US" : "es-ES";
 }
 
 function updateDocumentLanguage() {
@@ -510,7 +510,7 @@ function updateLanguageControl() {
   if (!button || !flag || !code) return;
 
   const english = currentLanguage === "en";
-  flag.className = `language-flag ${english ? "flag-england" : "flag-spain"}`;
+  flag.className = `language-flag ${english ? "flag-usa" : "flag-spain"}`;
   code.textContent = english ? "EN" : "ES";
   button.setAttribute("aria-label", english ? "Change language to Spanish" : "Cambiar idioma a inglés");
   button.title = english ? "Español" : "English";

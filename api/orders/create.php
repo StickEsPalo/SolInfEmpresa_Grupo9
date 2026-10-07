@@ -11,6 +11,9 @@ $data = requestJson(16000);
 $customerInput = $data['customer'] ?? null;
 $itemsInput = $data['items'] ?? null;
 $paymentMethod = trim((string)($data['paymentMethod'] ?? ''));
+if ($paymentMethod === 'PayPal') {
+    apiRespond(['error' => 'Para pagar con PayPal usa el botón de PayPal.'], 422);
+}
 $promoCode = strtoupper(trim((string)($data['promoCode'] ?? '')));
 
 if (!is_array($customerInput) || !is_array($itemsInput)

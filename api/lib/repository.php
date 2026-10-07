@@ -122,9 +122,9 @@ final class PFDatabase {
     }
     public function pdo(): PDO { if(!$this->pdo) throw new RuntimeException('PDO no disponible para driver mock.'); return $this->pdo; }
 
-    public function createOrder(int $userId,array $customer,array $items,string $paymentUi,string $promoCode): array {
+    public function quoteOrder(array $items,string $promoCode,bool $forUpdate=false): array {
         $productIds=array_column($items,'productId');
-        $products=$this->productsByIds($productIds,true);
+        $products=$this->productsByIds($productIds,$forUpdate);
         $index=[]; foreach($products as $p)$index[(int)$p['id']]=$p;
         $lines=[]; $subtotal=0.0;
         foreach($items as $item){
@@ -139,10 +139,15 @@ final class PFDatabase {
         $shipping=($subtotal<=0||$subtotal>=70)?0.0:6.90;
         $tax=round(($subtotal-$discount+$shipping)*0.21,2);
         $total=round($subtotal-$discount+$shipping+$tax,2);
-        $paymentDb=['Tarjeta de prueba'=>'tarjeta_simulada','Bizum de prueba'=>'bizum_simulado','Transferencia simulada'=>'transferencia_simulada'][$paymentUi]??null;
+        return ['lines'=>$lines,'subtotal'=>$subtotal,'discount'=>$discount,'shipping'=>$shipping,'tax'=>$tax,'total'=>$total];
+    }
+
+    public function createOrder(int $userId,array $customer,array $items,string $paymentUi,string $promoCode, ?string $externalRef=null): array {
+        ['lines'=>$lines,'subtotal'=>$subtotal,'discount'=>$discount,'shipping'=>$shipping,'tax'=>$tax,'total'=>$total]=$this->quoteOrder($items,$promoCode,true);
+        $paymentDb=['Tarjeta de prueba'=>'tarjeta_simulada','Bizum de prueba'=>'bizum_simulado','Transferencia simulada'=>'transferencia_simulada', 'PayPal' => 'paypal_simulado'][$paymentUi]??null;
         if(!$paymentDb) throw new DomainException('Método de pago no válido.');
         $code='PF-'.date('Y').'-'.strtoupper(bin2hex(random_bytes(4)));
-        $now=date(DATE_ATOM); $paymentRef='SIM-'.strtoupper(bin2hex(random_bytes(3)));
+        $now=date(DATE_ATOM); $paymentRef=$externalRef ?? 'SIM-'.strtoupper(bin2hex(random_bytes(3)));
         $orderId=0;
         $result=$this->transaction(function() use (&$orderId,&$code,&$now,$userId,$customer,$lines,$subtotal,$discount,$shipping,$tax,$total,$paymentDb,$paymentRef){
             if($this->isMock()){
@@ -176,14 +181,69 @@ final class PFDatabase {
 
     private function hydrateMockOrder(array $order): array { return $order; }
 
-    public function getOrderForUser(int $orderId,int $userId): ?array {
-        if($this->isMock()){foreach($this->mock['orders'] as $o) if((int)$o['id']===$orderId&&(int)$o['usuario_id']===$userId)return $this->normalizeOrder($o); return null;}
-        $st=$this->pdo->prepare("SELECT p.id,p.codigo_pedido,p.usuario_id,p.estado,p.subtotal,p.impuestos,p.gastos_envio,p.descuento,p.total,p.fecha_pedido,u.nombre,u.apellidos,u.email,d.direccion,d.codigo_postal,d.ciudad,pg.metodo_pago,pg.estado AS pago_estado,pg.importe AS pago_importe,pg.referencia AS pago_referencia FROM pedidos p JOIN usuarios u ON u.id=p.usuario_id LEFT JOIN direcciones_pedido d ON d.pedido_id=p.id LEFT JOIN pagos pg ON pg.pedido_id=p.id WHERE p.id=? AND p.usuario_id=? LIMIT 1");
-        $st->execute([$orderId,$userId]); $o=$st->fetch(); if(!$o)return null; $o['items']=$this->getOrderItems($orderId); return $this->normalizeOrder($o);
+    public function getOrderForUser(int $orderId, int $userId): ?array {
+        if ($this->isMock()) {
+            foreach ($this->mock['orders'] as $order) {
+                if (
+                    (int) $order['id'] === $orderId
+                    && (int) $order['usuario_id'] === $userId
+                ) {
+                    return $this->normalizeOrder($order);
+                }
+            }
+            return null;
+        }
+
+        $statement = $this->pdo->prepare(
+            'SELECT p.id, p.codigo_pedido, p.usuario_id, p.estado,
+                    p.subtotal, p.impuestos, p.gastos_envio, p.descuento,
+                    p.total, p.fecha_pedido, u.nombre, u.apellidos, u.email,
+                    d.direccion, d.codigo_postal, d.ciudad,
+                    pg.metodo_pago, pg.estado AS pago_estado,
+                    pg.importe AS pago_importe,
+                    pg.referencia AS pago_referencia
+             FROM pedidos p
+             JOIN usuarios u ON u.id = p.usuario_id
+             LEFT JOIN direcciones_pedido d ON d.pedido_id = p.id
+             LEFT JOIN pagos pg ON pg.pedido_id = p.id
+             WHERE p.id = ? AND p.usuario_id = ?
+             LIMIT 1',
+        );
+        $statement->execute([$orderId, $userId]);
+        $order = $statement->fetch();
+
+        if (!$order) {
+            return null;
+        }
+
+        $order['items'] = $this->getOrderItems($orderId);
+        return $this->normalizeOrder($order);
     }
     private function getOrderItems(int $orderId): array {
-        if($this->isMock()) return [];
-        $st=$this->pdo->prepare('SELECT lp.producto_id AS productId, p.nombre, p.subtitulo, lp.cantidad AS quantity, lp.precio_unitario AS unitPrice, lp.subtotal AS lineTotal FROM lineas_pedido lp JOIN productos p ON p.id=lp.producto_id WHERE lp.pedido_id=? ORDER BY lp.id'); $st->execute([$orderId]); $rows=$st->fetchAll(); foreach($rows as &$r){$r['title']=$r['nombre'].($r['subtitulo']?' · '.$r['subtitulo']:''); unset($r['nombre'],$r['subtitulo']);} return $rows;
+        if ($this->isMock()) {
+            return [];
+        }
+
+        $statement = $this->pdo->prepare(
+            'SELECT lp.producto_id AS productId, p.nombre, p.subtitulo,
+                    lp.cantidad AS quantity,
+                    lp.precio_unitario AS unitPrice,
+                    lp.subtotal AS lineTotal
+             FROM lineas_pedido lp
+             JOIN productos p ON p.id = lp.producto_id
+             WHERE lp.pedido_id = ?
+             ORDER BY lp.id',
+        );
+        $statement->execute([$orderId]);
+        $rows = $statement->fetchAll();
+
+        foreach ($rows as &$row) {
+            $row['title'] = $row['nombre']
+                . ($row['subtitulo'] ? ' · ' . $row['subtitulo'] : '');
+            unset($row['nombre'], $row['subtitulo']);
+        }
+
+        return $rows;
     }
     private function normalizeOrder(array $o): array {
         if (isset($o['userId'], $o['totals'], $o['customer'])) return $o;
@@ -191,15 +251,104 @@ final class PFDatabase {
         $name = trim(($o['nombre'] ?? '') . ' ' . ($o['apellidos'] ?? ''));
         if ($name === '') $name = trim((string)($customer['name'] ?? ''));
         $email = (string)($o['email'] ?? ($customer['email'] ?? ''));
-        return ['id'=>(string)$o['codigo_pedido'],'dbId'=>(int)$o['id'],'userId'=>(int)$o['usuario_id'],'userName'=>$name,'userEmail'=>$email,'createdAt'=>$o['fecha_pedido'],'status'=>$o['estado'],'customer'=>['name'=>$name,'email'=>$email,'address'=>$o['direccion']??($customer['address']??''),'postalCode'=>$o['codigo_postal']??($customer['postalCode']??''),'city'=>$o['ciudad']??($customer['city']??'')],'items'=>$o['items']??[],'payment'=>['method'=>$o['metodo_pago']??($o['payment']['method']??''),'status'=>$o['pago_estado']??($o['payment']['status']??''),'reference'=>$o['pago_referencia']??($o['payment']['reference']??''),'amount'=>(float)($o['pago_importe']??($o['payment']['importe']??0))],'totals'=>['subtotal'=>(float)$o['subtotal'],'tax'=>(float)$o['impuestos'],'shipping'=>(float)$o['gastos_envio'],'discount'=>(float)$o['descuento'],'total'=>(float)$o['total']]];
+        return [
+            'id' => (string) $o['codigo_pedido'],
+            'dbId' => (int) $o['id'],
+            'userId' => (int) $o['usuario_id'],
+            'userName' => $name,
+            'userEmail' => $email,
+            'createdAt' => $o['fecha_pedido'],
+            'status' => $o['estado'],
+            'customer' => [
+                'name' => $name,
+                'email' => $email,
+                'address' => $o['direccion'] ?? ($customer['address'] ?? ''),
+                'postalCode' => $o['codigo_postal'] ?? ($customer['postalCode'] ?? ''),
+                'city' => $o['ciudad'] ?? ($customer['city'] ?? ''),
+            ],
+            'items' => $o['items'] ?? [],
+            'payment' => [
+                'method' => $o['metodo_pago'] ?? ($o['payment']['method'] ?? ''),
+                'status' => $o['pago_estado'] ?? ($o['payment']['status'] ?? ''),
+                'reference' => $o['pago_referencia'] ?? ($o['payment']['reference'] ?? ''),
+                'amount' => (float) ($o['pago_importe'] ?? ($o['payment']['importe'] ?? 0)),
+            ],
+            'totals' => [
+                'subtotal' => (float) $o['subtotal'],
+                'tax' => (float) $o['impuestos'],
+                'shipping' => (float) $o['gastos_envio'],
+                'discount' => (float) $o['descuento'],
+                'total' => (float) $o['total'],
+            ],
+        ];
     }
     public function myOrders(int $userId): array {
-        if($this->isMock()){ $arr=[]; foreach(array_reverse($this->mock['orders']) as $o)if((int)$o['usuario_id']===$userId)$arr[]=$this->normalizeOrder($o); return $arr; }
-        $st=$this->pdo->prepare("SELECT p.*,u.nombre,u.apellidos,u.email,d.direccion,d.codigo_postal,d.ciudad,pg.metodo_pago,pg.estado AS pago_estado,pg.importe AS pago_importe,pg.referencia AS pago_referencia FROM pedidos p JOIN usuarios u ON u.id=p.usuario_id LEFT JOIN direcciones_pedido d ON d.pedido_id=p.id LEFT JOIN pagos pg ON pg.pedido_id=p.id WHERE p.usuario_id=? ORDER BY p.fecha_pedido DESC"); $st->execute([$userId]); $rows=$st->fetchAll(); foreach($rows as &$o)$o['items']=$this->getOrderItems((int)$o['id']); return array_map(fn($o)=>$this->normalizeOrder($o),$rows);
+        if ($this->isMock()) {
+            $orders = [];
+            foreach (array_reverse($this->mock['orders']) as $order) {
+                if ((int) $order['usuario_id'] === $userId) {
+                    $orders[] = $this->normalizeOrder($order);
+                }
+            }
+            return $orders;
+        }
+
+        $statement = $this->pdo->prepare(
+            'SELECT p.*, u.nombre, u.apellidos, u.email,
+                    d.direccion, d.codigo_postal, d.ciudad,
+                    pg.metodo_pago, pg.estado AS pago_estado,
+                    pg.importe AS pago_importe,
+                    pg.referencia AS pago_referencia
+             FROM pedidos p
+             JOIN usuarios u ON u.id = p.usuario_id
+             LEFT JOIN direcciones_pedido d ON d.pedido_id = p.id
+             LEFT JOIN pagos pg ON pg.pedido_id = p.id
+             WHERE p.usuario_id = ?
+             ORDER BY p.fecha_pedido DESC',
+        );
+        $statement->execute([$userId]);
+        $orders = $statement->fetchAll();
+
+        foreach ($orders as &$order) {
+            $order['items'] = $this->getOrderItems((int) $order['id']);
+        }
+
+        return array_map(
+            fn ($order) => $this->normalizeOrder($order),
+            $orders,
+        );
     }
     public function allOrders(): array {
-        if($this->isMock()){ $arr=[]; foreach(array_reverse($this->mock['orders']) as $o)$arr[]=$this->normalizeOrder($o); return $arr; }
-        $st=$this->pdo->query("SELECT p.*,u.nombre,u.apellidos,u.email,d.direccion,d.codigo_postal,d.ciudad,pg.metodo_pago,pg.estado AS pago_estado,pg.importe AS pago_importe,pg.referencia AS pago_referencia FROM pedidos p JOIN usuarios u ON u.id=p.usuario_id LEFT JOIN direcciones_pedido d ON d.pedido_id=p.id LEFT JOIN pagos pg ON pg.pedido_id=p.id ORDER BY p.fecha_pedido DESC"); $rows=$st->fetchAll(); foreach($rows as &$o)$o['items']=$this->getOrderItems((int)$o['id']); return array_map(fn($o)=>$this->normalizeOrder($o),$rows);
+        if ($this->isMock()) {
+            $orders = [];
+            foreach (array_reverse($this->mock['orders']) as $order) {
+                $orders[] = $this->normalizeOrder($order);
+            }
+            return $orders;
+        }
+
+        $statement = $this->pdo->query(
+            'SELECT p.*, u.nombre, u.apellidos, u.email,
+                    d.direccion, d.codigo_postal, d.ciudad,
+                    pg.metodo_pago, pg.estado AS pago_estado,
+                    pg.importe AS pago_importe,
+                    pg.referencia AS pago_referencia
+             FROM pedidos p
+             JOIN usuarios u ON u.id = p.usuario_id
+             LEFT JOIN direcciones_pedido d ON d.pedido_id = p.id
+             LEFT JOIN pagos pg ON pg.pedido_id = p.id
+             ORDER BY p.fecha_pedido DESC',
+        );
+        $orders = $statement->fetchAll();
+
+        foreach ($orders as &$order) {
+            $order['items'] = $this->getOrderItems((int) $order['id']);
+        }
+
+        return array_map(
+            fn ($order) => $this->normalizeOrder($order),
+            $orders,
+        );
     }
 
     public function addEvent(string $type,?int $userId,?int $productId,?int $orderId,array $payload): void {
