@@ -1,0 +1,12 @@
+# Configuración local/real con credenciales de base de datos o SMTP
+/api/config/config.php
+/api/config/config.local.php
+/config.mail.php
+/.env
+/.env.*
+**/config.mail.php
+
+# Archivos auxiliares locales
+*.log
+.DS_Store
+Thumbs.db
