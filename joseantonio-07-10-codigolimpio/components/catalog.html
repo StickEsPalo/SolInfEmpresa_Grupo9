@@ -1,0 +1,49 @@
+<section class="catalog-section section-shell" id="catalogo" aria-labelledby="catalog-title">
+  <div class="section-intro">
+    <div>
+      <p class="eyebrow">El catálogo permanente</p>
+      <h2 id="catalog-title">Encuentra tu próxima<br><em>partida memorable.</em></h2>
+    </div>
+    <p>Filtra por tipo de experiencia, número de jugadores o dificultad. Cada ficha indica el origen de su diseño y todo lo necesario para decidir.</p>
+  </div>
+  <div class="catalog-toolbar">
+    <label class="search-field" for="search-input">
+      <span aria-hidden="true">⌕</span>
+      <input id="search-input" type="search" placeholder="Buscar por título, autor o país" autocomplete="off">
+    </label>
+    <button class="filter-toggle" type="button" data-action="toggle-filters" aria-expanded="false" aria-controls="filters">Filtros <span aria-hidden="true">⌄</span></button>
+  </div>
+  <div class="filters" id="filters">
+    <fieldset>
+      <legend>Categoría</legend>
+      <div class="filter-pills" data-filter-group="category">
+        <button class="pill is-active" type="button" data-value="all">Todo</button>
+        <button class="pill" type="button" data-value="Estrategia">Estrategia</button>
+        <button class="pill" type="button" data-value="Familiar">Familiar</button>
+        <button class="pill" type="button" data-value="Cooperativo">Cooperativo</button>
+        <button class="pill" type="button" data-value="Puzzle">Puzzles</button>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Jugadores</legend>
+      <div class="filter-pills" data-filter-group="players">
+        <button class="pill is-active" type="button" data-value="all">Cualquiera</button>
+        <button class="pill" type="button" data-value="solo">1 jugador</button>
+        <button class="pill" type="button" data-value="small">2-3</button>
+        <button class="pill" type="button" data-value="group">4+</button>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Dificultad</legend>
+      <div class="filter-pills" data-filter-group="difficulty">
+        <button class="pill is-active" type="button" data-value="all">Todas</button>
+        <button class="pill" type="button" data-value="Iniciación">Iniciación</button>
+        <button class="pill" type="button" data-value="Media">Media</button>
+        <button class="pill" type="button" data-value="Experta">Experta</button>
+      </div>
+    </fieldset>
+  </div>
+  <div class="catalog-meta"><span id="product-count">12 juegos seleccionados</span><button type="button" data-action="clear-filters">Limpiar filtros</button></div>
+  <div class="product-grid" id="product-grid" aria-live="polite"></div>
+  <p class="empty-state" id="empty-state" hidden>No encontramos una referencia con esos filtros. Prueba a ampliar la búsqueda.</p>
+</section>

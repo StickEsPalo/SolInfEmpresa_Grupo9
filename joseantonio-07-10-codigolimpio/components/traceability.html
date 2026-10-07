@@ -1,0 +1,39 @@
+<section
+  class="trace-section section-shell"
+  id="trazabilidad"
+  aria-labelledby="trace-title"
+>
+  <div class="trace-copy">
+    <p class="eyebrow">Datos que dejan huella</p>
+    <h2 id="trace-title">Cada decisión<br />tiene un <em>evento.</em></h2>
+    <p>
+      Este prototipo registra las acciones de negocio en el navegador:
+      visualización, carrito, checkout, pedido, pago y soporte. Son la base de
+      una futura integración con un ERP, CRM o sistema de analítica.
+    </p>
+    <button
+      class="button button-dark"
+      type="button"
+      data-action="open-admin"
+      data-admin-only
+      hidden
+      aria-hidden="true"
+    >
+      Abrir back-office <span>→</span>
+    </button>
+  </div>
+
+  <div class="event-preview" aria-label="Vista previa de eventos registrados">
+    <div class="terminal-top">
+      <span></span>
+      <span></span>
+      <span></span>
+      <b>event-stream.json</b>
+    </div>
+    <pre id="event-preview-content"></pre>
+    <div class="terminal-foot">
+      <span>localStorage / event_log</span>
+      <span id="event-count">0 eventos</span>
+    </div>
+  </div>
+</section>
