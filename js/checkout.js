@@ -53,6 +53,22 @@ function updateCheckoutTotals() {
   refs.checkoutDialog.querySelector('#checkout-totals').innerHTML = renderTotals(calculateCart(promo));
 }
 
+function showOrderSuccess(result) {
+  state.cart = [];
+  persistCartForUser([]);
+  renderCart();
+  if (typeof renderAccountOrders === 'function') renderAccountOrders();
+  refs.checkoutDialog.close();
+
+  const order = result.order;
+  const notification = result.mailSent
+    ? 'El servidor de correo aceptó el aviso corporativo.'
+    : 'El pedido está guardado, pero no se pudo enviar el aviso por correo. Se conserva en la base de datos; avisa al administrador.';
+  refs.successDialog.querySelector('#success-copy').textContent =
+    `El pedido ${order.id} se ha guardado correctamente. Total: ${formatPrice(order.totals.total)}. El pago es una simulación y no se ha realizado ningún cobro. ${notification}`;
+  refs.successDialog.showModal();
+}
+
 async function createOrder(form) {
   const user = currentUser();
   const error = refs.checkoutDialog.querySelector('#checkout-error');
@@ -96,23 +112,80 @@ async function createOrder(form) {
         promoCode: (data.promo || '').trim().toUpperCase() === 'YUZU10' ? 'YUZU10' : '',
       }),
     });
-
-    state.cart = [];
-    persistCartForUser([]);
-    renderCart();
-    if (typeof renderAccountOrders === 'function') renderAccountOrders();
-    refs.checkoutDialog.close();
-
-    const order = result.order;
-    const notification = result.mailSent
-      ? 'El servidor de correo aceptó el aviso corporativo.'
-      : 'El pedido está guardado, pero no se pudo enviar el aviso por correo. Se conserva en la base de datos; avisa al administrador.';
-    refs.successDialog.querySelector('#success-copy').textContent =
-      `El pedido ${order.id} se ha guardado correctamente. Total: ${formatPrice(order.totals.total)}. El pago es una simulación y no se ha realizado ningún cobro. ${notification}`;
-    refs.successDialog.showModal();
+    showOrderSuccess(result);
   } catch (requestError) {
     error.textContent = requestError.message || 'No se pudo crear el pedido.';
   } finally {
     submit.disabled = false;
+  }
+}
+
+let paypalButtonsRendered = false;
+
+async function loadPayPalSdk() {
+  if (window.paypal) return;
+  const settings = await apiRequest('./api/paypal/settings.php');
+  if (!settings.enabled) throw new Error('PayPal no está disponible en este momento.');
+  await new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(settings.clientId)}&currency=${settings.currency}&intent=capture&components=buttons`;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error('No se pudo cargar PayPal.'));
+    document.head.appendChild(script);
+  });
+}
+
+function readCheckoutData(form) {
+  const user = currentUser();
+  const error = refs.checkoutDialog.querySelector('#checkout-error');
+  const data = Object.fromEntries(new FormData(form).entries());
+  const name = (data.customerName || '').trim() || `${user.firstName} ${user.lastName}`.trim();
+  if (!data.address?.trim() || !/^\d{5}$/.test(data.postalCode || '')
+    || (data.city || '').trim().length < 2 || !name) {
+    error.textContent = 'Revisa los campos de entrega antes de pagar.';
+    return null;
+  }
+  error.textContent = '';
+  return {
+    customer: { name, email: user.email, address: data.address.trim(), postalCode: data.postalCode.trim(), city: data.city.trim() },
+    items: cartLines().map(({ product, quantity }) => ({ productId: Number(product.id), quantity: Number(quantity) })),
+    promoCode: (data.promo || '').trim().toUpperCase() === 'YUZU10' ? 'YUZU10' : '',
+  };
+}
+
+async function togglePayPal(form) {
+  const usePayPal = form.querySelector('[name="paymentMethod"]').value === 'PayPal';
+  const container = form.querySelector('#paypal-button-container');
+  const error = refs.checkoutDialog.querySelector('#checkout-error');
+  form.querySelector('[type="submit"]').hidden = usePayPal;
+  container.hidden = !usePayPal;
+  if (!usePayPal || paypalButtonsRendered) return;
+
+  try {
+    await loadPayPalSdk();
+    await paypal.Buttons({
+      // Valida el formulario antes de abrir la ventana de PayPal
+      onClick: (data, actions) => (readCheckoutData(form) ? actions.resolve() : actions.reject()),
+      createOrder: async () => {
+        const result = await apiRequest('./api/paypal/create-order.php', {
+          method: 'POST',
+          body: JSON.stringify(readCheckoutData(form)),
+        });
+        return result.id;
+      },
+      onApprove: async (data) => {
+        error.textContent = 'Confirmando el pago con PayPal…';
+        const result = await apiRequest('./api/paypal/capture-order.php', {
+          method: 'POST',
+          body: JSON.stringify({ orderID: data.orderID }),
+        });
+        showOrderSuccess(result);
+      },
+      onCancel: () => { error.textContent = 'Has cancelado el pago en PayPal.'; },
+      onError: (err) => { error.textContent = err?.message || 'PayPal no pudo completar el pago.'; },
+    }).render('#paypal-button-container');
+    paypalButtonsRendered = true;
+  } catch (loadError) {
+    error.textContent = loadError.message;
   }
 }

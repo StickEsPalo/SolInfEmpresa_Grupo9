@@ -1,117 +1,50 @@
-# Despliegue en hosting
+# Despliegue de PlanetaFicha
 
-La versión incluida ya está preparada para trabajar con PHP + MySQL/MariaDB y con sesiones reales. El carrito puede seguir siendo local por usuario, pero el catálogo, usuarios, pedidos, pagos simulados, incidencias y eventos se gestionan a través de la API PHP.
+La aplicación necesita un servidor web con PHP y MySQL/MariaDB. Mantén la estructura de carpetas al subirla.
 
-## 1. Crear la base de datos
+## 1. Preparar la base de datos
 
-En el panel del hosting crea una base de datos MySQL/MariaDB y un usuario con permisos sobre esa base de datos.
+Crea una base de datos y un usuario con permisos sobre ella en el panel del hosting. Importa `database/juegos_y_puzles.sql` una sola vez para crear las tablas y cargar el catálogo inicial.
 
-Después importa:
+## 2. Configurar el servidor
 
-```text
-database/juegos_y_puzles.sql
-```
+En el hosting, crea `api/config/config.php` a partir de `api/config/config.example.php`. Introduce los datos privados de MySQL y, si vas a usar avisos por correo, los del buzón SMTP.
 
-## 2. Completar una sola configuración
+No publiques ni compartas `api/config/config.php`. No pongas contraseñas en archivos JavaScript.
 
-Edita en el servidor:
+## 3. Subir los archivos necesarios
 
-```text
-api/config/config.php
-```
+Sube a la carpeta pública del sitio:
 
-y rellena:
+- `index.html`, `styles.css` y `app.js`
+- Las carpetas `components/`, `js/`, `img/` y `api/`
+- El archivo `.htaccess` de la raíz
+- `api/config/config.php`, creado de forma privada en el servidor
 
-```text
-DOMINIO
-HOST MYSQL
-NOMBRE BD
-USUARIO MYSQL
-CONTRASEÑA MYSQL
-```
+No es necesario subir `database/` después de importar el SQL, ni la carpeta `tests/`, ni los archivos Markdown. Conserva esos archivos en tu copia local.
 
-No pongas estas credenciales en ningún `.js`.
+La página debe servirse por HTTP o HTTPS. No funcionará al abrir `index.html` directamente desde el disco.
 
-## 3. Subir los archivos
+## 4. Comprobar la conexión
 
-Sube todo el contenido manteniendo exactamente las carpetas `api/`, `components/`, `js/`, `img/` y `database/`.
+Abre `https://TU-DOMINIO/api/health.php`. Cuando el servidor se conecte a la base de datos, responderá con JSON y `"ok":true`.
 
-La página principal es:
+Después, prueba el registro, el inicio de sesión, el catálogo, el carrito, un pedido simulado y el formulario de incidencias. Usa siempre datos ficticios.
 
-```text
-index.html
-```
+## 5. Configurar el correo
 
-La web necesita un servidor HTTP y PHP; no debe abrirse con `file://`.
+Los avisos se envían desde la API usando `api/lib/mail.php`. En la sección `mail` de `api/config/config.php`, configura los datos que proporciona el proveedor del buzón: servidor SMTP, puerto, usuario y contraseña.
 
-## 4. Primera comprobación
+Para DonDominio, confirma los valores exactos en el panel de correo. Si el buzón usa STARTTLS, normalmente se emplea el puerto 587; si usa TLS implícito, el puerto suele ser 465. El correo solo queda configurado cuando se activa `enabled` y se introducen credenciales válidas.
 
-Abre:
+Los pedidos y las incidencias se guardan en la base de datos. Si SMTP falla, el registro puede conservarse aunque el aviso por correo no llegue.
 
-```text
-https://TU-DOMINIO/api/health.php
-```
+## Prueba automatizada local
 
-Con MySQL correctamente conectado debe responder con JSON y `"ok":true`.
-
-## 5. Comprobación funcional
-
-### Cliente
-
-```text
-ana.demo@example.com
-Contraseña: demo123
-```
-
-Debe poder iniciar sesión, añadir productos, abrir el carrito, hacer un checkout simulado y ver únicamente sus pedidos en Mi cuenta.
-
-### Segundo cliente
-
-```text
-carlos.demo@example.com
-Contraseña: demo123
-```
-
-No debe poder ver pedidos de Ana ni acceder al Back-office.
-
-### Administrador
-
-```text
-admin@example.com
-Contraseña: admin123
-```
-
-Debe poder abrir el Back-office y consultar todos los pedidos, incluyendo el usuario al que pertenece cada pedido y los eventos registrados.
-
-## 6. Correo
-
-El correo requiere una cuenta SMTP real del dominio. En `api/config/config.php`, dentro de `mail`, configura:
-
-```php
-'enabled' => true,
-'host' => 'smtp.dondominio.com',
-'port' => 587,
-'username' => 'correocorporativo@planetaficha.onl',
-'password' => 'CONTRASEÑA_DEL_BUZON',
-'from_email' => 'correocorporativo@planetaficha.onl',
-'from_name' => 'PlanetaFicha',
-'to_email' => 'correocorporativo@planetaficha.onl',
-'ehlo' => 'planetaficha.onl',
-'timeout' => 15,
-```
-
-Introduce la contraseña solo en el archivo de configuración privado del servidor. El código usa STARTTLS con puerto 587 (o TLS implícito en el 465), con verificación del certificado. Si el correo está alojado en otro proveedor, utiliza el servidor y puerto que ese proveedor indique. Aunque SMTP esté apagado o falle, pedido e incidencia se conservan en la base de datos; la interfaz informa de que faltó el aviso.
-
-## 7. Prueba virtual incluida
-
-Antes de entregar esta versión se ejecuta:
+El proyecto incluye `tests/virtual_e2e.py` y `tests/mock-db.json` para una prueba del backend con una base de datos simulada. Ejecútala desde la carpeta del proyecto con:
 
 ```bash
 python tests/virtual_e2e.py
 ```
 
-La prueba levanta la misma API PHP con el adaptador `mock`, reproduce las sesiones, roles, ACL, registro, login, pedidos, stock, eventos, soporte y carga HTTP de componentes, y verifica la sintaxis PHP/JS. El entorno de desarrollo usado para preparar el paquete no dispone de un servidor MySQL ni del driver `pdo_mysql`, por lo que la conexión a un MySQL real se debe validar en el hosting con `/api/health.php`.
-
-
-### Prueba local
-Live Server sirve HTML/CSS/JS, pero no ejecuta PHP. Para comprobar autenticación, sesiones y pedidos con la API hay que usar PHP (por ejemplo `php -S localhost:8080`) o subir la carpeta al hosting. Con Live Server la interfaz carga y usa el catálogo visual incluido como respaldo; la autenticación y los pedidos requieren PHP/MySQL.
+Esta prueba no sustituye la comprobación de la conexión real al hosting, que se hace con `/api/health.php`.

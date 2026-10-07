@@ -1,3 +1,186 @@
-async function renderAdmin(){if(!isAdmin())return;const statsEl=document.querySelector("#admin-stats");const ordersEl=document.querySelector("#admin-orders");const eventsEl=document.querySelector("#admin-events");statsEl.innerHTML='<div class="admin-stat"><span>Cargando…</span><b>…</b></div>';try{const [or,ev]=await Promise.all([apiRequest("./api/admin/orders.php"),apiRequest("./api/admin/events.php")]);const orders=or.orders||[];const events=ev.events||[];const revenue=Number(or.stats?.revenue||0);statsEl.innerHTML=[["Pedidos",orders.length],["Facturación simulada",formatPrice(revenue)],["Eventos",events.length],["Usuarios",new Set(orders.map(o=>o.userId)).size]].map(([l,v])=>`<div class="admin-stat"><span>${l}</span><b>${v}</b></div>`).join("");ordersEl.innerHTML=orders.length?`<table class="orders-table"><thead><tr><th>Pedido</th><th>Fecha</th><th>Usuario</th><th>Entrega</th><th>Importe</th><th>Pago</th><th>Estado</th></tr></thead><tbody>${orders.map(o=>`<tr><td><b>${safeText(o.id)}</b><br><small>${(o.items||[]).map(i=>`${i.quantity}× ${safeText(i.title)}`).join(", ")}</small></td><td>${new Date(o.createdAt).toLocaleString("es-ES",{dateStyle:"short",timeStyle:"short"})}</td><td><b>${safeText(o.userName)}</b><br><small>${safeText(o.userEmail)}</small><br><small>ID ${safeText(o.userId)}</small></td><td>${safeText(o.customer.address)}<br><small>${safeText(o.customer.postalCode)} · ${safeText(o.customer.city)}</small></td><td>${formatPrice(o.totals.total)}</td><td>${safeText(o.payment.method)}<br><small>${safeText(o.payment.reference)}</small></td><td><span class="status-chip">${safeText(orderStatusLabel(o.status))}</span></td></tr>`).join("")}</tbody></table>`:'<p class="empty-admin">Todavía no hay pedidos.</p>';eventsEl.innerHTML=events.length?`<table class="events-table"><thead><tr><th>Hora</th><th>Evento</th><th>Usuario</th><th>Producto</th><th>Pedido</th><th>Datos</th></tr></thead><tbody>${events.map(e=>`<tr><td>${new Date(e.fecha_evento||e.occurredAt).toLocaleString("es-ES")}</td><td><b>${safeText(e.tipo_evento||e.type)}</b></td><td>${safeText(e.usuario_id??"")}</td><td>${safeText(e.producto_id??"")}</td><td>${safeText(e.pedido_id??"")}</td><td><code>${safeText(e.datos||JSON.stringify(e.payload||{}))}</code></td></tr>`).join("")}</tbody></table>`:'<p class="empty-admin">No hay eventos.</p>';document.querySelector("#admin-model").innerHTML=`<div class="model-grid"><article class="model-card"><h3>Usuarios</h3><p>id · nombre · apellidos · email · rol</p></article><article class="model-card"><h3>Productos</h3><p>catálogo y stock procedentes de MySQL</p></article><article class="model-card"><h3>Pedidos</h3><p>usuario · líneas · dirección · totales · estado</p></article><article class="model-card"><h3>Pagos simulados</h3><p>método · estado · referencia</p></article><article class="model-card"><h3>Eventos</h3><p>trazabilidad persistida en base de datos</p></article><article class="model-card"><h3>Incidencias</h3><p>soporte asociado al usuario conectado</p></article></div>`;}catch(e){ordersEl.innerHTML=`<p class="form-error">${safeText(e.message||"No se pudo cargar el back-office.")}</p>`;eventsEl.innerHTML="";}}
-function openAdmin(){if(!isAdmin()){promptAuth("El back-office está reservado a las cuentas de administrador.");return;}renderAdmin();refs.adminDialog.showModal();}
-function selectAdminTab(tab){if(!isAdmin())return;document.querySelectorAll("[data-admin-tab]").forEach(b=>b.classList.toggle("is-active",b.dataset.adminTab===tab));["orders","events","model"].forEach(n=>document.querySelector(`#admin-${n}`).hidden=n!==tab);}
+async function renderAdmin() {
+  if (!isAdmin()) return;
+
+  const statsElement = document.querySelector("#admin-stats");
+  const ordersElement = document.querySelector("#admin-orders");
+  const eventsElement = document.querySelector("#admin-events");
+
+  statsElement.innerHTML = `
+    <div class="admin-stat"><span>Cargando…</span><b>…</b></div>
+  `;
+
+  try {
+    const [ordersResponse, eventsResponse] = await Promise.all([
+      apiRequest("./api/admin/orders.php"),
+      apiRequest("./api/admin/events.php"),
+    ]);
+    const orders = ordersResponse.orders || [];
+    const events = eventsResponse.events || [];
+    const revenue = Number(ordersResponse.stats?.revenue || 0);
+    const userCount = new Set(orders.map((order) => order.userId)).size;
+    const statistics = [
+      ["Pedidos", orders.length],
+      ["Facturación simulada", formatPrice(revenue)],
+      ["Eventos", events.length],
+      ["Usuarios", userCount],
+    ];
+
+    statsElement.innerHTML = statistics
+      .map(
+        ([label, value]) => `
+          <div class="admin-stat">
+            <span>${label}</span>
+            <b>${value}</b>
+          </div>
+        `,
+      )
+      .join("");
+
+    ordersElement.innerHTML = orders.length
+      ? renderAdminOrders(orders)
+      : '<p class="empty-admin">Todavía no hay pedidos.</p>';
+    eventsElement.innerHTML = events.length
+      ? renderAdminEvents(events)
+      : '<p class="empty-admin">No hay eventos.</p>';
+    renderAdminDataModel();
+  } catch (error) {
+    const message = error.message || "No se pudo cargar el back-office.";
+    ordersElement.innerHTML = `<p class="form-error">${safeText(message)}</p>`;
+    eventsElement.innerHTML = "";
+  }
+}
+
+function renderAdminOrders(orders) {
+  const rows = orders
+    .map((order) => {
+      const products = (order.items || [])
+        .map((item) => `${item.quantity}× ${safeText(item.title)}`)
+        .join(", ");
+      const date = new Date(order.createdAt).toLocaleString("es-ES", {
+        dateStyle: "short",
+        timeStyle: "short",
+      });
+
+      return `
+        <tr>
+          <td><b>${safeText(order.id)}</b><br /><small>${products}</small></td>
+          <td>${date}</td>
+          <td>
+            <b>${safeText(order.userName)}</b><br />
+            <small>${safeText(order.userEmail)}</small><br />
+            <small>ID ${safeText(order.userId)}</small>
+          </td>
+          <td>
+            ${safeText(order.customer.address)}<br />
+            <small>
+              ${safeText(order.customer.postalCode)} · ${safeText(order.customer.city)}
+            </small>
+          </td>
+          <td>${formatPrice(order.totals.total)}</td>
+          <td>
+            ${safeText(order.payment.method)}<br />
+            <small>${safeText(order.payment.reference)}</small>
+          </td>
+          <td>
+            <span class="status-chip">
+              ${safeText(orderStatusLabel(order.status))}
+            </span>
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  return `
+    <table class="orders-table">
+      <thead>
+        <tr>
+          <th>Pedido</th><th>Fecha</th><th>Usuario</th><th>Entrega</th>
+          <th>Importe</th><th>Pago</th><th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function renderAdminEvents(events) {
+  const rows = events
+    .map((event) => {
+      const timestamp = event.fecha_evento || event.occurredAt;
+      const eventType = event.tipo_evento || event.type;
+      const details = event.datos || JSON.stringify(event.payload || {});
+
+      return `
+        <tr>
+          <td>${new Date(timestamp).toLocaleString("es-ES")}</td>
+          <td><b>${safeText(eventType)}</b></td>
+          <td>${safeText(event.usuario_id ?? "")}</td>
+          <td>${safeText(event.producto_id ?? "")}</td>
+          <td>${safeText(event.pedido_id ?? "")}</td>
+          <td><code>${safeText(details)}</code></td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  return `
+    <table class="events-table">
+      <thead>
+        <tr>
+          <th>Hora</th><th>Evento</th><th>Usuario</th>
+          <th>Producto</th><th>Pedido</th><th>Datos</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function renderAdminDataModel() {
+  const sections = [
+    ["Usuarios", "id · nombre · apellidos · email · rol"],
+    ["Productos", "catálogo y stock procedentes de MySQL"],
+    ["Pedidos", "usuario · líneas · dirección · totales · estado"],
+    ["Pagos simulados", "método · estado · referencia"],
+    ["Eventos", "trazabilidad persistida en base de datos"],
+    ["Incidencias", "soporte asociado al usuario conectado"],
+  ];
+
+  document.querySelector("#admin-model").innerHTML = `
+    <div class="model-grid">
+      ${sections
+        .map(
+          ([title, description]) => `
+            <article class="model-card">
+              <h3>${title}</h3>
+              <p>${description}</p>
+            </article>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function openAdmin() {
+  if (!isAdmin()) {
+    promptAuth("El back-office está reservado a las cuentas de administrador.");
+    return;
+  }
+
+  renderAdmin();
+  refs.adminDialog.showModal();
+}
+
+function selectAdminTab(tab) {
+  if (!isAdmin()) return;
+
+  document.querySelectorAll("[data-admin-tab]").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.adminTab === tab);
+  });
+
+  ["orders", "events", "model"].forEach((name) => {
+    document.querySelector(`#admin-${name}`).hidden = name !== tab;
+  });
+}

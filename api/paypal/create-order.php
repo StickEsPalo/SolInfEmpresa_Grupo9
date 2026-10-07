@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../lib/bootstrap.php';
-require_once __DIR__ . '/../lib/mail.php';
+require_once __DIR__ . '/../lib/paypal.php';
 
 requestMethod('POST');
 requireCsrf();
@@ -10,10 +10,6 @@ $userId = requireAuth();
 $data = requestJson(16000);
 $customerInput = $data['customer'] ?? null;
 $itemsInput = $data['items'] ?? null;
-$paymentMethod = trim((string)($data['paymentMethod'] ?? ''));
-if ($paymentMethod === 'PayPal') {
-    apiRespond(['error' => 'Para pagar con PayPal usa el botón de PayPal.'], 422);
-}
 $promoCode = strtoupper(trim((string)($data['promoCode'] ?? '')));
 
 if (!is_array($customerInput) || !is_array($itemsInput)
@@ -57,30 +53,42 @@ foreach ($quantities as $productId => $quantity) {
     $items[] = ['productId' => (int)$productId, 'quantity' => $quantity];
 }
 
+$paypalConfig = $config['paypal'] ?? [];
+if (empty($paypalConfig['enabled'])) {
+    apiRespond(['error' => 'PayPal no está activado en el servidor.'], 503);
+}
+
 try {
-    // The repository calculates prices and saves order, lines, payment and
-    // events transactionally. Notify only after that transaction succeeds.
-    $order = db()->createOrder($userId, $customer, $items, $paymentMethod, $promoCode);
+    $quote = db()->quoteOrder($items, $promoCode);   // total calculado en el servidor
+    $response = paypalApi($paypalConfig, 'POST', '/v2/checkout/orders', [
+        'intent' => 'CAPTURE',
+        'purchase_units' => [[
+            'description' => 'Pedido PlanetaFicha',
+            'amount' => [
+                'currency_code' => (string)($paypalConfig['currency'] ?? 'EUR'),
+                'value' => number_format($quote['total'], 2, '.', ''),
+            ],
+        ]],
+    ]);
 } catch (DomainException $error) {
     apiRespond(['error' => $error->getMessage()], 422);
 } catch (Throwable $error) {
-    error_log('[PlanetaFicha pedido] ' . $error->getMessage());
-    apiRespond(['error' => 'No se pudo crear el pedido. Revisa la conexión con la base de datos.'], 500);
+    error_log('[PlanetaFicha paypal-create] ' . $error->getMessage());
+    apiRespond(['error' => 'No se pudo conectar con PayPal.'], 502);
 }
 
-// Release the PHP session lock before contacting the SMTP server.
-if (session_status() === PHP_SESSION_ACTIVE) {
-    session_write_close();
-}
-$mailSent = false;
-try {
-    $mailSent = pfSendOrderNotice($config['mail'] ?? [], $order, $customer);
-} catch (Throwable $error) {
-    error_log('[PlanetaFicha pedido-mail] ' . $error->getMessage());
+$paypalOrderId = (string)($response['data']['id'] ?? '');
+if ($response['status'] !== 201 || $paypalOrderId === '') {
+    error_log('[PlanetaFicha paypal-create] HTTP ' . $response['status'] . ' ' . json_encode($response['data']));
+    apiRespond(['error' => 'PayPal no aceptó el pedido.'], 502);
 }
 
-apiRespond([
-    'ok' => true,
-    'order' => $order,
-    'mailSent' => $mailSent,
-], 201);
+// Guardamos en la sesión lo que se va a pagar, para usarlo al capturar
+$_SESSION['paypal_pending'][$paypalOrderId] = [
+    'customer' => $customer,
+    'items' => $items,
+    'promoCode' => $promoCode,
+    'total' => $quote['total'],
+];
+
+apiRespond(['id' => $paypalOrderId]);

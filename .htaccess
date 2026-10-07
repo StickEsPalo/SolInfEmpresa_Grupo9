@@ -1,0 +1,7 @@
+Options -Indexes
+
+# Evita publicar archivos ocultos, configuraciones, documentación interna,
+# volcados SQL y scripts de prueba desde el hosting Apache.
+<FilesMatch "(?i)(^\.|^config(?:\.mail)?\.php$|^\.env|\.(md|sql|py)$)">
+    Require all denied
+</FilesMatch>

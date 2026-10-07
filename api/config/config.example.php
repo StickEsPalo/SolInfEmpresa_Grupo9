@@ -37,6 +37,14 @@ return [
         'timeout' => 15,
     ],
 
+    'paypal' => [
+        'enabled' => true,
+        'client_id'=> 'PEGA_AQUI_TU_CLIENT_ID',
+        'secret'=> 'PEGA_AQUI_TU_SECRET_KEY',
+        'api_base'=> 'https://api-m.sandbox.paypal.com',
+        'currency'=> 'EUR',
+    ],
+
     'security' => [
         'session_name' => 'planetaficha_session',
     ],
