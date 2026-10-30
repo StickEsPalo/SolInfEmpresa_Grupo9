@@ -1,0 +1,13 @@
+{
+  "eventId": "order:1:created",
+  "type": "order.created",
+  "occurredAt": "2026-10-20T10:15:00+02:00",
+  "entity": { "type": "order", "id": "PF-2026-DEMO001" },
+  "data": {
+    "userId": 1,
+    "items": [{ "productId": 1, "title": "Ajedrez", "quantity": 1, "unitPrice": 19.99, "lineTotal": 19.99 }],
+    "totals": { "subtotal": 19.99, "tax": 5.65, "shipping": 6.9, "discount": 0, "total": 32.54 },
+    "status": "pagado",
+    "createdAt": "2026-10-20T10:15:00+02:00"
+  }
+}

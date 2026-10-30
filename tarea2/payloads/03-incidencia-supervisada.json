@@ -1,0 +1,14 @@
+{
+  "eventId": "incident:1:support-requested",
+  "type": "support.requested",
+  "occurredAt": "2026-10-20T12:30:00+02:00",
+  "entity": { "type": "incident", "id": "1" },
+  "data": {
+    "incidentId": 1,
+    "incidentCode": "INC-DEMO-0001",
+    "userId": 1,
+    "subject": "Consulta de demostración",
+    "description": "La caja de prueba llegó con una esquina doblada. ¿Podrían indicarme cómo proceder?",
+    "status": "abierta"
+  }
+}

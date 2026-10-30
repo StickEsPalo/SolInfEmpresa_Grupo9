@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Cuadro operativo | PlanetaFicha</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="./operations.css" />
+  <script src="./operations.js" defer></script>
+</head>
+<body class="operations-page">
+  <header class="operations-header">
+    <a href="../index.html" class="brand" aria-label="PlanetaFicha, volver al catálogo">
+      <span class="brand-mark" aria-hidden="true">P</span>
+      <span>Planeta<br /><i>Ficha</i></span>
+    </a>
+    <div>
+      <p class="eyebrow">Tarea 2 · Back-office</p>
+      <h1>Cuadro operativo</h1>
+    </div>
+    <button class="button button-dark" id="refresh-dashboard" type="button">Actualizar datos</button>
+  </header>
+
+  <main class="operations-main">
+    <p id="dashboard-message" class="dashboard-message" role="status">Comprobando sesión…</p>
+
+    <section aria-labelledby="metrics-title">
+      <div class="operations-section-heading">
+        <div>
+          <p class="eyebrow">Datos del sistema</p>
+          <h2 id="metrics-title">Indicadores</h2>
+        </div>
+        <p>Los valores se calculan con pedidos, incidencias, eventos y ejecuciones guardados en la base de datos.</p>
+      </div>
+      <div id="metrics-grid" class="metrics-grid" aria-live="polite"></div>
+    </section>
+
+    <section class="dashboard-panel" aria-labelledby="daily-orders-title">
+      <div class="operations-section-heading">
+        <div>
+          <p class="eyebrow">Actividad reciente</p>
+          <h2 id="daily-orders-title">Pedidos por día</h2>
+        </div>
+        <p>Últimos siete días con datos, obtenidos de la tabla de pedidos.</p>
+      </div>
+      <div id="daily-orders-chart" class="chart-container"></div>
+    </section>
+
+    <div class="operations-columns">
+      <section class="dashboard-panel" aria-labelledby="products-title">
+        <p class="eyebrow">Demanda</p>
+        <h2 id="products-title">Productos más solicitados</h2>
+        <div id="top-products"></div>
+      </section>
+      <section class="dashboard-panel" aria-labelledby="integration-title">
+        <p class="eyebrow">Trazabilidad</p>
+        <h2 id="integration-title">Ejecuciones de integración</h2>
+        <div id="integration-runs"></div>
+      </section>
+    </div>
+
+    <section class="dashboard-panel" aria-labelledby="orders-title">
+      <div class="operations-section-heading">
+        <div>
+          <p class="eyebrow">Escenario 2</p>
+          <h2 id="orders-title">Sincronizar estado de pedido</h2>
+        </div>
+        <p>El cambio se registra en el back-office y se publica al workflow. La integración requiere que n8n esté configurado.</p>
+      </div>
+      <div id="recent-orders"></div>
+    </section>
+
+    <section class="dashboard-panel" aria-labelledby="agent-title">
+      <div class="operations-section-heading">
+        <div>
+          <p class="eyebrow">Supervisión humana</p>
+          <h2 id="agent-title">Propuestas del agente</h2>
+        </div>
+        <p>El agente solo propone. Aprobar o rechazar queda registrado con usuario y fecha; Telegram se avisa después de aprobar.</p>
+      </div>
+      <div id="agent-proposals"></div>
+    </section>
+  </main>
+</body>
+</html>

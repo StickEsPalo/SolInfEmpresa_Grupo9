@@ -1,0 +1,13 @@
+{
+  "eventId": "order:1:status:demo001",
+  "type": "order.status_changed",
+  "occurredAt": "2026-10-20T11:00:00+02:00",
+  "entity": { "type": "order", "id": "PF-2026-DEMO001" },
+  "data": {
+    "orderId": 1,
+    "orderCode": "PF-2026-DEMO001",
+    "from": "pagado",
+    "to": "preparando",
+    "changedBy": 1
+  }
+}
