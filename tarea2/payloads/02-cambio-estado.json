@@ -1,13 +1,22 @@
-{
-  "eventId": "order:1:status:demo001",
-  "type": "order.status_changed",
-  "occurredAt": "2026-10-20T11:00:00+02:00",
-  "entity": { "type": "order", "id": "PF-2026-DEMO001" },
-  "data": {
-    "orderId": 1,
-    "orderCode": "PF-2026-DEMO001",
-    "from": "pagado",
-    "to": "preparando",
-    "changedBy": 1
+[
+  {
+      "body": {
+      "eventId": "order:16:status:20261101232339-b3fb01",
+      "type": "order.status_changed",
+      "occurredAt": "2026-11-02T00:23:39+01:00",
+      "entity": {
+        "type": "order",
+        "id": "PF-2026-8DB2C727"
+      },
+      "data": {
+        "orderId": 16,
+        "orderCode": "PF-2026-8DB2C727",
+        "from": "pendiente",
+        "to": "pagado",
+        "changedBy": 3
+      }
+    },
+    "webhookUrl": "https://planetaficha-g9.app.n8n.cloud/webhook/planetaficha-tarea2-eventos",
+    "executionMode": "production"
   }
-}
+]
