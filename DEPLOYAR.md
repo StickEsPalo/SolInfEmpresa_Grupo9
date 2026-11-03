@@ -39,6 +39,13 @@ Para DonDominio, confirma los valores exactos en el panel de correo. Si el buzó
 
 Los pedidos y las incidencias se guardan en la base de datos. Si SMTP falla, el registro puede conservarse aunque el aviso por correo no llegue.
 
+## 6. Activar la integración de Tarea 2
+
+1. Haz una copia de seguridad e importa una sola vez `database/migrations/001_tarea2_integration.sql` en la base de datos existente.
+2. Conserva los bloques `db`, `mail`, `paypal` y `security` actuales de `api/config/config.php`. Añade solamente el bloque `integration` de `api/config/config.example.php` y rellena la Production URL del Webhook y el secreto compartido. No subas ni sustituyas el archivo privado por el ejemplo.
+3. Importa los dos workflows de `tarea2/workflows/` en n8n, configura Header Auth con la cabecera `X-Integration-Token`, variables y credenciales según `tarea2/README.md`, y activa ambos flujos.
+4. Comprueba el cuadro de Tarea 2 en `https://TU-DOMINIO/tarea2/dashboard.html` con una sesión de administrador. La migración SQL debe estar aplicada antes de abrirlo.
+
 ## Prueba automatizada local
 
 El proyecto incluye `tests/virtual_e2e.py` y `tests/mock-db.json` para una prueba del backend con una base de datos simulada. Ejecútala desde la carpeta del proyecto con:

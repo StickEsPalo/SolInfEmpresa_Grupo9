@@ -353,7 +353,7 @@ final class PFDatabase {
 
     public function addEvent(string $type,?int $userId,?int $productId,?int $orderId,array $payload): void {
         if($this->isMock()){$this->mock['events'][]=['id'=>(int)$this->mock['next']['event']++,'tipo_evento'=>$type,'usuario_id'=>$userId,'producto_id'=>$productId,'pedido_id'=>$orderId,'datos'=>json_encode($payload,JSON_UNESCAPED_UNICODE),'fecha_evento'=>date(DATE_ATOM)];$this->saveMock();return;}
-        $allowed=['product.viewed','cart.item_added','checkout.started','order.created','payment.simulated','support.requested','user.registered','user.logged_in','user.logged_out'];
+        $allowed=['product.viewed','cart.item_added','checkout.started','order.created','payment.simulated','support.requested','user.registered','user.logged_in','user.logged_out','order.status_changed','stock.updated','incident.created','agent.approved','workflow.error'];
         if(!in_array($type,$allowed,true)) return;
         $st=$this->pdo->prepare('INSERT INTO eventos (tipo_evento,usuario_id,producto_id,pedido_id,datos) VALUES (?,?,?,?,?)'); $st->execute([$type,$userId,$productId,$orderId,json_encode($payload,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)]);
     }

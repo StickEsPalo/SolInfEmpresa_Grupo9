@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../lib/bootstrap.php';
 require_once __DIR__ . '/../lib/mail.php';
+require_once __DIR__ . '/../lib/integration.php';
 require_once __DIR__ . '/../lib/paypal.php';
 
 requestMethod('POST');
@@ -53,8 +54,24 @@ try {
     error_log('[PlanetaFicha pedido-mail] ' . $error->getMessage());
 }
 
+$integration = pfPublishWorkflowEvent($config, [
+    'eventId' => 'order:' . (string) ($order['dbId'] ?? $order['id'] ?? '') . ':created',
+    'type' => 'order.created',
+    'occurredAt' => (string) ($order['createdAt'] ?? date(DATE_ATOM)),
+    'entity' => ['type' => 'order', 'id' => (string) ($order['id'] ?? '')],
+    'data' => [
+        'userId' => $userId,
+        'items' => $order['items'] ?? [],
+        'totals' => $order['totals'] ?? [],
+        'status' => $order['status'] ?? 'pendiente',
+        'createdAt' => $order['createdAt'] ?? date(DATE_ATOM),
+        'paymentProvider' => 'PayPal',
+    ],
+]);
+
 apiRespond([
     'ok' => true,
     'order' => $order,
     'mailSent' => $mailSent,
+    'workflowAccepted' => $integration['sent'],
 ], 201);

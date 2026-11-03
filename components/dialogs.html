@@ -168,9 +168,23 @@
   </div>
 
   <p class="admin-description">
-    Datos persistidos únicamente en este navegador. Esta vista permite revisar
-    pedidos y evidencias sin exponer datos reales.
+    Desde aquí puedes consultar los pedidos y los eventos registrados por la tienda.
   </p>
+  <div class="dashboard-access-card" data-admin-only hidden>
+    <div class="dashboard-access-copy">
+      <p class="eyebrow">Indicadores y seguimiento</p>
+      <h3>Cuadro operativo</h3>
+      <p>Consulta las métricas, las incidencias, las integraciones y las propuestas del agente en un mismo sitio.</p>
+    </div>
+    <a
+      class="button button-primary dashboard-access-button"
+      href="./tarea2/dashboard.html"
+      target="_blank"
+      rel="noopener"
+    >
+      Abrir cuadro operativo <span aria-hidden="true">↗</span>
+    </a>
+  </div>
   <div class="admin-stats" id="admin-stats"></div>
 
   <div class="admin-tabs" role="tablist">
@@ -338,7 +352,7 @@
           data-action="open-admin-from-account"
           hidden
         >
-          Acceder al back-office <span>→</span>
+          Abrir panel de administración <span>→</span>
         </button>
         <button
           class="button button-block account-logout-button"
