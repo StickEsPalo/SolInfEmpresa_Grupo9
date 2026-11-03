@@ -45,6 +45,14 @@ return [
         'currency'=> 'EUR',
     ],
 
+    // Opcional: integración con los workflows exportados en /tarea2/workflows.
+    // Añadir los valores privados únicamente en config.php del servidor.
+    'integration' => [
+        'event_webhook_url' => '',
+        'shared_secret' => '',
+        'timeout_seconds' => 4,
+    ],
+
     'security' => [
         'session_name' => 'planetaficha_session',
     ],
