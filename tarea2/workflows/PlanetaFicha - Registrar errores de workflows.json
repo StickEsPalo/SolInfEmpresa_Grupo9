@@ -1,0 +1,95 @@
+{
+  "name": "PlanetaFicha - Registrar errores de workflows",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "dddbda61-0392-48fc-9b6a-d8567327091b",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const error = $input.first().json;\nconst execution = error.execution ?? {};\nconst workflow = error.workflow ?? {};\nreturn [{ json: { eventId: `n8n-error:${execution.id ?? Date.now()}`, eventType: 'workflow.error', entityType: 'workflow', entityId: String(workflow.id ?? workflow.name ?? 'unknown'), outcome: 'failed', summary: String(execution.error?.message ?? error.error?.message ?? 'Error de ejecución').slice(0, 480), executionId: String(execution.id ?? ''), occurredAt: new Date().toISOString(), payload: { workflowName: workflow.name ?? 'unknown', lastNode: execution.lastNodeExecuted ?? '', error: String(execution.error?.message ?? error.error?.message ?? 'Error').slice(0, 1000) } } }];"
+      },
+      "id": "c2da6477-0653-4337-8312-62cc1f2e3052",
+      "name": "Normalizar error de ejecución",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.PF_API_BASE_URL + '/api/integration/ingest.php' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Integration-Token",
+              "value": "={{ $vars.PF_INTEGRATION_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "50bf3f90-0131-417e-b14c-55fa966f3065",
+      "name": "Guardar error en PlanetaFicha",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalizar error de ejecución",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar error de ejecución": {
+      "main": [
+        [
+          {
+            "node": "Guardar error en PlanetaFicha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3bf778be-722d-4e85-b667-1cdcb2f9c159",
+  "meta": {
+    "instanceId": "260a0ddbc5ad4c3c2512f413b7f5a570f4785f8a04acf67e00bd1bdcfc4cd92d"
+  },
+  "nodeGroups": [],
+  "id": "aSnjpWgaA0M4JNc8",
+  "tags": []
+}
