@@ -372,19 +372,75 @@ async function loadDashboard() {
   }
 }
 
+const loginRefs = {
+  panel: document.querySelector("#login-panel"),
+  form: document.querySelector("#dashboard-login-form"),
+  error: document.querySelector("#dashboard-login-error"),
+  content: document.querySelector("#dashboard-content"),
+  refresh: document.querySelector("#refresh-dashboard"),
+  logout: document.querySelector("#logout-dashboard"),
+};
+
+function showLoginOnly(message = "") {
+  loginRefs.panel.hidden = false;
+  loginRefs.content.hidden = true;
+  loginRefs.refresh.hidden = true;
+  loginRefs.logout.hidden = true;
+  Object.values(dashboardRefs).forEach((node) => { if (node && node !== dashboardRefs.message) node.innerHTML = ""; });
+  loginRefs.error.textContent = message;
+  showDashboardMessage("Inicia sesión con una cuenta administradora para ver los datos.");
+}
+
+async function showDashboardContent() {
+  loginRefs.panel.hidden = true;
+  loginRefs.content.hidden = false;
+  loginRefs.refresh.hidden = false;
+  loginRefs.logout.hidden = false;
+  await loadDashboard();
+}
+
+async function handleDashboardLogin(event) {
+  event.preventDefault();
+  loginRefs.error.textContent = "";
+  const email = loginRefs.form.elements.email.value.trim();
+  const password = loginRefs.form.elements.password.value;
+  if (!email || !password) { loginRefs.error.textContent = "Introduce tu correo y tu contraseña."; return; }
+  try {
+    const result = await dashboardRequest("../api/auth/login.php", { method: "POST", body: JSON.stringify({ email, password }) });
+    loginRefs.form.reset();
+    if (result.user?.role !== "administrador") {
+      await dashboardRequest("../api/auth/logout.php", { method: "POST", body: "{}" });
+      showLoginOnly("Esta cuenta no tiene permisos de administración.");
+      return;
+    }
+    await showDashboardContent();
+  } catch (error) {
+    loginRefs.form.elements.password.value = "";
+    loginRefs.error.textContent = error.message;
+  }
+}
+
+async function handleDashboardLogout() {
+  try { await dashboardRequest("../api/auth/logout.php", { method: "POST", body: "{}" }); } catch (error) { /* la sesión se cierra igualmente en pantalla */ }
+  showLoginOnly();
+}
+
 async function initializeDashboard() {
   try {
     const session = await dashboardRequest("../api/auth/session.php");
     dashboardCsrfToken = session.csrfToken || "";
     if (!session.authenticated || session.user?.role !== "administrador") {
-      showDashboardMessage("Inicia sesión con una cuenta administradora para ver estos datos.", "error");
+      showLoginOnly();
       return;
     }
-    await loadDashboard();
+    await showDashboardContent();
   } catch (error) {
+    showLoginOnly();
     showDashboardMessage(error.message, "error");
   }
 }
 
+loginRefs.form.addEventListener("submit", handleDashboardLogin);
+loginRefs.logout.addEventListener("click", handleDashboardLogout);
 document.querySelector("#refresh-dashboard").addEventListener("click", loadDashboard);
 initializeDashboard();

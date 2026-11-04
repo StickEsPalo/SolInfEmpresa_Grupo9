@@ -19,11 +19,34 @@
       <p class="eyebrow">Área de administración</p>
       <h1>Cuadro operativo</h1>
     </div>
-    <button class="button button-dark" id="refresh-dashboard" type="button">Actualizar datos</button>
+    <div class="operations-actions">
+      <button class="button button-dark" id="refresh-dashboard" type="button" hidden>Actualizar datos</button>
+      <button class="button" id="logout-dashboard" type="button" hidden>Cerrar sesión</button>
+    </div>
   </header>
 
   <main class="operations-main">
     <p id="dashboard-message" class="dashboard-message" role="status">Comprobando sesión…</p>
+
+    <section id="login-panel" class="dashboard-login" aria-labelledby="login-title" hidden>
+      <p class="eyebrow">Acceso restringido</p>
+      <h2 id="login-title">Inicia sesión como administrador</h2>
+      <p>Los datos del cuadro operativo solo se muestran a cuentas administradoras.</p>
+      <form id="dashboard-login-form" class="auth-form" novalidate>
+        <label>
+          Correo electrónico
+          <input name="email" type="email" autocomplete="username" required />
+        </label>
+        <label>
+          Contraseña
+          <input name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <p class="form-error" id="dashboard-login-error" role="alert"></p>
+        <button class="button button-primary button-block" type="submit">Entrar <span>→</span></button>
+      </form>
+    </section>
+
+    <div id="dashboard-content" class="dashboard-content" hidden>
 
     <section aria-labelledby="metrics-title">
       <div class="operations-section-heading">
@@ -124,6 +147,7 @@
       </div>
       <div id="agent-proposals"></div>
     </section>
+    </div>
   </main>
 </body>
 </html>

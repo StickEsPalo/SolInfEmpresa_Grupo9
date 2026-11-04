@@ -1,3 +1,4 @@
+[hidden] { display: none !important; }
 .operations-page { min-height: 100vh; background: #f4efe3; color: #17201e; }
 .operations-header { max-width: 1240px; margin: 0 auto; padding: 28px 24px; display: flex; align-items: center; gap: 28px; border-bottom: 1px solid #d7cdb7; }
 .operations-header > div { flex: 1; }
@@ -80,3 +81,12 @@
   .proposal-actions { align-items: stretch; flex-direction: column; }
   .proposal-actions .button { width: 100%; }
 }
+
+.operations-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.dashboard-content { display: grid; gap: 28px; }
+.dashboard-login { max-width: 440px; width: 100%; margin: 24px auto; padding: 28px; background: #fffdf8; border: 1px solid #e2d9c9; }
+.dashboard-login h2 { margin: 4px 0 8px; }
+.dashboard-login > p:not(.eyebrow) { color: #5d655f; margin: 0 0 18px; }
+.dashboard-login .auth-form { display: grid; gap: 14px; }
+.dashboard-login label { display: grid; gap: 6px; font-size: .9rem; }
+.dashboard-login input { padding: 10px; border: 1px solid #cfc6b5; background: #fff; font: inherit; }
