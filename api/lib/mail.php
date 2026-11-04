@@ -6,13 +6,13 @@ declare(strict_types=1);
  * Port 587 uses STARTTLS; port 465 uses implicit TLS. Certificate verification
  * stays enabled in both modes. SMTP failures never roll back stored records.
  */
-function pfMailSend(array $cfg, string $subject, string $body, string $replyTo = ''): bool
+function pfMailSend(array $cfg, string $subject, string $body, string $replyTo = '', string $recipient = '', bool $html = false): bool
 {
     if (empty($cfg['enabled'])) {
         return false;
     }
 
-    $required = ['host', 'username', 'password', 'from_email', 'to_email'];
+    $required = ['host', 'username', 'password', 'from_email'];
     foreach ($required as $key) {
         if (!isset($cfg[$key]) || trim((string)$cfg[$key]) === '') {
             error_log('[PlanetaFicha mail] Configuración SMTP incompleta (' . $key . ').');
@@ -23,7 +23,7 @@ function pfMailSend(array $cfg, string $subject, string $body, string $replyTo =
     $host = trim((string)$cfg['host']);
     $port = (int)($cfg['port'] ?? 587);
     $from = trim((string)$cfg['from_email']);
-    $to = trim((string)$cfg['to_email']);
+    $to = trim($recipient !== '' ? $recipient : (string)($cfg['to_email'] ?? ''));
     if (!preg_match('/^[A-Za-z0-9.-]+$/', $host)
         || $port < 1 || $port > 65535
         || !filter_var($from, FILTER_VALIDATE_EMAIL)
@@ -132,7 +132,7 @@ function pfMailSend(array $cfg, string $subject, string $body, string $replyTo =
             'To: <' . $to . '>',
             'Subject: ' . $encodedSubject,
             'MIME-Version: 1.0',
-            'Content-Type: text/plain; charset=UTF-8',
+            'Content-Type: ' . ($html ? 'text/html' : 'text/plain') . '; charset=UTF-8',
             'Content-Transfer-Encoding: base64',
         ];
         if ($replyTo !== '') {
@@ -198,10 +198,45 @@ function pfSendOrderNotice(array $mailCfg, array $order, array $customer): bool
     ]);
 
     $customerEmail = (string)($customer['email'] ?? '');
-    return pfMailSend(
+    $corporateSent = pfMailSend(
         $mailCfg,
         'Nuevo pedido ' . (string)($order['id'] ?? '') . ' - PlanetaFicha',
         $body,
         filter_var($customerEmail, FILTER_VALIDATE_EMAIL) ? $customerEmail : ''
     );
+
+    // Send the customer a separate, branded order receipt/invoice by email.
+    if (!filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) {
+        return $corporateSent;
+    }
+    $escape = static fn($value): string => htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $rows = '';
+    foreach (($order['items'] ?? []) as $item) {
+        $rows .= '<tr><td style="padding:14px 10px;border-bottom:1px solid #eee8dc">'
+            . $escape($item['title'] ?? 'Producto') . '</td><td style="padding:14px 10px;text-align:center;border-bottom:1px solid #eee8dc">'
+            . (int)($item['quantity'] ?? 0) . '</td><td style="padding:14px 10px;text-align:right;border-bottom:1px solid #eee8dc">'
+            . $currency($item['lineTotal'] ?? 0) . '</td></tr>';
+    }
+    $totalsHtml = '';
+    foreach ([['Subtotal','subtotal'],['Descuento','discount'],['Envío','shipping'],['IVA','tax']] as [$label,$key]) {
+        $totalsHtml .= '<tr><td style="padding:5px 0;color:#66716b">' . $label . '</td><td style="padding:5px 0;text-align:right">'
+            . $currency($totals[$key] ?? 0) . '</td></tr>';
+    }
+    $orderId = $escape($order['id'] ?? '');
+    $date = $escape($order['createdAt'] ?? date(DATE_ATOM));
+    $name = $escape($customer['name'] ?? '');
+    $address = $escape($customer['address'] ?? '') . '<br>' . $escape($customer['postalCode'] ?? '') . ' ' . $escape($customer['city'] ?? '');
+    $invoice = '<!doctype html><html><body style="margin:0;background:#f3efe5;font-family:Arial,sans-serif;color:#19211e">'
+        . '<div style="max-width:680px;margin:24px auto;background:#fffdf8;border:1px solid #e5ddcd">'
+        . '<div style="padding:30px 36px;background:#19211e;color:#fffdf8"><div style="font-size:12px;letter-spacing:3px;color:#f0785b">PLANETAFICHA</div>'
+        . '<h1 style="font-family:Georgia,serif;font-size:32px;margin:18px 0 4px">Gracias por tu compra</h1><div style="color:#d9d7cc">Tu pedido ya está registrado</div></div>'
+        . '<div style="padding:30px 36px"><div style="display:flex;justify-content:space-between"><div><b>FACTURA / RECIBO</b><br><span style="color:#69716c">Pedido ' . $orderId . '<br>' . $date . '</span></div>'
+        . '<div style="text-align:right">' . $name . '<br>' . $address . '</div></div>'
+        . '<table style="width:100%;border-collapse:collapse;margin-top:26px"><thead><tr style="text-align:left;color:#66716b"><th style="padding:10px">Artículo</th><th style="padding:10px;text-align:center">Cant.</th><th style="padding:10px;text-align:right">Importe</th></tr></thead><tbody>' . $rows . '</tbody></table>'
+        . '<table style="width:260px;margin:18px 0 0 auto;border-collapse:collapse">' . $totalsHtml
+        . '<tr><td style="padding:12px 0;border-top:2px solid #19211e;font-size:18px"><b>Total</b></td><td style="padding:12px 0;border-top:2px solid #19211e;text-align:right;font-size:18px"><b>' . $currency($totals['total'] ?? 0) . '</b></td></tr></table>'
+        . '<div style="margin-top:28px;padding:15px;background:#f3efe5;color:#59635d;font-size:13px">Pago de demostración. Este proyecto es un prototipo académico y este mensaje no constituye una factura fiscal.</div>'
+        . '<p style="margin-top:28px;color:#69716c">¿Tienes alguna duda? Responde a este correo y estaremos encantados de ayudarte.</p></div></div></body></html>';
+    $customerSent = pfMailSend($mailCfg, 'Tu pedido ' . (string)($order['id'] ?? '') . ' - PlanetaFicha', $invoice, '', $customerEmail, true);
+    return $corporateSent && $customerSent;
 }

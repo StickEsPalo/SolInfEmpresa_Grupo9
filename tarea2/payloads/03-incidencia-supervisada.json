@@ -1,0 +1,23 @@
+[
+  {
+    "body": {
+      "eventId": "incident:16:support-requested",
+      "type": "support.requested",
+      "occurredAt": "2026-11-02 10:43:23",
+      "entity": {
+        "type": "incident",
+        "id": "16"
+      },
+      "data": {
+        "incidentId": 16,
+        "incidentCode": "INC-20261102-0016",
+        "userId": 5,
+        "subject": "Quiero cambiar la dirección de entrega",
+        "description": "Me equivoqué al escribir el código postal al hacer mi pedido. ¿Puedo corregirlo antes de que lo enviéis?",
+        "status": "abierta"
+      }
+    },
+    "webhookUrl": "https://planetaficha-g9.app.n8n.cloud/webhook/planetaficha-tarea2-eventos",
+    "executionMode": "production"
+  }
+]

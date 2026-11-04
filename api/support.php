@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/lib/bootstrap.php';
 require_once __DIR__ . '/lib/mail.php';
+require_once __DIR__ . '/lib/integration.php';
 
 requestMethod('POST');
 requireCsrf();
@@ -54,8 +55,24 @@ try {
     $mailSent = false;
 }
 
+$integration = pfPublishWorkflowEvent($config, [
+    'eventId' => 'incident:' . (string) ($incident['id'] ?? '') . ':support-requested',
+    'type' => 'support.requested',
+    'occurredAt' => (string) ($incident['fecha_creacion'] ?? date(DATE_ATOM)),
+    'entity' => ['type' => 'incident', 'id' => (string) ($incident['id'] ?? '')],
+    'data' => [
+        'incidentId' => (int) ($incident['id'] ?? 0),
+        'incidentCode' => $incidentCode,
+        'userId' => $userId,
+        'subject' => $subject,
+        'description' => $message,
+        'status' => $incident['estado'] ?? 'abierta',
+    ],
+]);
+
 apiRespond([
     'ok' => true,
     'incidentId' => $incidentCode,
     'mailSent' => $mailSent,
+    'workflowAccepted' => $integration['sent'],
 ], 201);

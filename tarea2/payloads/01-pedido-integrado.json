@@ -1,0 +1,36 @@
+[
+  {
+    "body": {
+      "eventId": "order:17:created",
+      "type": "order.created",
+      "occurredAt": "2026-11-02 00:04:59",
+      "entity": {
+        "type": "order",
+        "id": "PF-2026-1003508D"
+      },
+      "data": {
+        "userId": 5,
+        "items": [
+          {
+            "productId": 14,
+            "quantity": 1,
+            "unitPrice": "17500.00",
+            "lineTotal": "17500.00",
+            "title": "Ajedrez · Edición premium"
+          }
+        ],
+        "totals": {
+          "subtotal": 17500,
+          "tax": 3675,
+          "shipping": 0,
+          "discount": 0,
+          "total": 21175
+        },
+        "status": "pagado",
+        "createdAt": "2026-11-02 00:04:59"
+      }
+    },
+    "webhookUrl": "https://planetaficha-g9.app.n8n.cloud/webhook/planetaficha-tarea2-eventos",
+    "executionMode": "production"
+  }
+]
