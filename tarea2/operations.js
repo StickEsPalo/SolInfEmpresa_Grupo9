@@ -65,7 +65,7 @@ function formatCurrency(value) {
 function renderMetrics(metrics) {
   const cards = [
     ["Pedidos registrados", metrics.orders, "Pedidos guardados en el sistema"],
-    ["Importe simulado", formatCurrency(metrics.simulatedRevenue), "Suma de los totales de pedido"],
+    ["Importe simulado", formatCurrency(metrics.simulatedRevenue), "Pedidos con pago confirmado (excluye pendientes y cancelados)"],
     ["Incidencias abiertas", metrics.openIncidents, "Estados abierta o en revisión"],
     ["Integraciones correctas", metrics.successfulIntegrations, "Ejecuciones sincronizadas"],
     ["Integraciones fallidas", metrics.failedIntegrations, "Errores guardados por el workflow"],
@@ -109,9 +109,9 @@ function renderDailyRevenueChart(rows) {
   const max = Math.max(1, ...normalized.map((row) => row.total));
   const bars = normalized.map((row, index) => {
     const x = 42 + index * 72, height = row.total ? Math.max(3, row.total / max * 112) : 2, y = 142 - height;
-    return `<g><title>${escapeHtml(row.day)}: ${formatCurrency(row.total)} pagados</title><rect x="${x}" y="${y}" width="44" height="${height}" rx="7" fill="#9caf62"/><text x="${x + 22}" y="164" text-anchor="middle">${escapeHtml(row.day)}</text><text class="chart-value" x="${x + 22}" y="${Math.max(15,y-6)}" text-anchor="middle">${row.total ? escapeHtml(formatCurrency(row.total)) : "—"}</text></g>`;
+    return `<g><title>${escapeHtml(row.day)}: ${formatCurrency(row.total)} con pago confirmado</title><rect x="${x}" y="${y}" width="44" height="${height}" rx="7" fill="#9caf62"/><text x="${x + 22}" y="164" text-anchor="middle">${escapeHtml(row.day)}</text><text class="chart-value" x="${x + 22}" y="${Math.max(15,y-6)}" text-anchor="middle">${row.total ? escapeHtml(formatCurrency(row.total)) : "—"}</text></g>`;
   }).join("");
-  dashboardRefs.revenueChart.innerHTML = `<svg viewBox="0 0 560 185" role="img" aria-label="Ingresos diarios de pedidos pagados durante los últimos siete días"><line x1="24" y1="142" x2="540" y2="142" stroke="#d7cdb7"/>${bars}</svg>`;
+  dashboardRefs.revenueChart.innerHTML = `<svg viewBox="0 0 560 185" role="img" aria-label="Ingresos diarios de pedidos con pago confirmado durante los últimos siete días"><line x1="24" y1="142" x2="540" y2="142" stroke="#d7cdb7"/>${bars}</svg>`;
 }
 
 function renderProducts(rows) {

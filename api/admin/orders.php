@@ -5,9 +5,12 @@ requestMethod('GET');
 requireAdmin();
 
 $orders = db()->allOrders();
+// Los pedidos pendientes o cancelados no cuentan como ingreso.
 $totalRevenue = array_sum(
     array_map(
-        fn ($order) => (float) $order['totals']['total'],
+        fn ($order) => in_array($order['status'], ['pendiente', 'cancelado'], true)
+            ? 0.0
+            : (float) $order['totals']['total'],
         $orders,
     ),
 );

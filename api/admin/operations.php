@@ -6,7 +6,8 @@ requireAdmin();
 $pdo = db()->pdo();
 
 $orderMetrics = $pdo->query(
-    "SELECT COUNT(*) AS orders, COALESCE(SUM(total), 0) AS revenue
+    "SELECT COUNT(*) AS orders,
+            COALESCE(SUM(CASE WHEN estado NOT IN ('pendiente', 'cancelado') THEN total END), 0) AS revenue
      FROM pedidos"
 )->fetch();
 $openIncidents = (int) $pdo->query(
@@ -43,7 +44,7 @@ $dailyRevenue = $pdo->query(
     "SELECT DATE(fecha_pedido) AS day, COALESCE(SUM(total), 0) AS total
      FROM pedidos
      WHERE fecha_pedido >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
-       AND estado = 'pagado'
+       AND estado NOT IN ('pendiente', 'cancelado')
      GROUP BY DATE(fecha_pedido) ORDER BY day"
 )->fetchAll();
 $incidentHours = $pdo->query(

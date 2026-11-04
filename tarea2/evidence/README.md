@@ -53,11 +53,4 @@ La instancia de n8n Cloud usada es una prueba de 14 días, por lo que estas capt
 | `17_n8n_ejecucion18_error_503_modelo.png` | Error 503 del proveedor de IA (modelo saturado) y su recuperación al cambiar de modelo. |
 | `22_limites_gemini_1.png`, `_2`, `_3` | Límites del plan gratuito de Gemini que explican los errores 429 y las esperas. |
 
-## Pendientes de añadir
 
-| Archivo | Qué demuestra |
-| --- | --- |
-| `23_log_agente_analista.png` | Panel Logs de n8n: qué consulta el Analista (solo lectura) y qué devuelve. |
-| `24_log_agente_revisor.png` | Panel Logs: qué consulta y qué guarda el Revisor. |
-| `25_telegram_mensaje.png` | Mensaje del bot en el grupo interno tras aprobar. |
-| `26_incidencia_registrada_web.png` | Confirmación "Incidencia INC-… registrada" en la web. |
