@@ -65,7 +65,7 @@ function formatCurrency(value) {
 function renderMetrics(metrics) {
   const cards = [
     ["Pedidos registrados", metrics.orders, "Pedidos guardados en el sistema"],
-    ["Importe simulado", formatCurrency(metrics.simulatedRevenue), "Suma de los totales de pedido"],
+    ["Importe simulado", formatCurrency(metrics.simulatedRevenue), "Pedidos con pago confirmado (excluye pendientes y cancelados)"],
     ["Incidencias abiertas", metrics.openIncidents, "Estados abierta o en revisión"],
     ["Integraciones correctas", metrics.successfulIntegrations, "Ejecuciones sincronizadas"],
     ["Integraciones fallidas", metrics.failedIntegrations, "Errores guardados por el workflow"],
@@ -109,9 +109,9 @@ function renderDailyRevenueChart(rows) {
   const max = Math.max(1, ...normalized.map((row) => row.total));
   const bars = normalized.map((row, index) => {
     const x = 42 + index * 72, height = row.total ? Math.max(3, row.total / max * 112) : 2, y = 142 - height;
-    return `<g><title>${escapeHtml(row.day)}: ${formatCurrency(row.total)} pagados</title><rect x="${x}" y="${y}" width="44" height="${height}" rx="7" fill="#9caf62"/><text x="${x + 22}" y="164" text-anchor="middle">${escapeHtml(row.day)}</text><text class="chart-value" x="${x + 22}" y="${Math.max(15,y-6)}" text-anchor="middle">${row.total ? escapeHtml(formatCurrency(row.total)) : "—"}</text></g>`;
+    return `<g><title>${escapeHtml(row.day)}: ${formatCurrency(row.total)} con pago confirmado</title><rect x="${x}" y="${y}" width="44" height="${height}" rx="7" fill="#9caf62"/><text x="${x + 22}" y="164" text-anchor="middle">${escapeHtml(row.day)}</text><text class="chart-value" x="${x + 22}" y="${Math.max(15,y-6)}" text-anchor="middle">${row.total ? escapeHtml(formatCurrency(row.total)) : "—"}</text></g>`;
   }).join("");
-  dashboardRefs.revenueChart.innerHTML = `<svg viewBox="0 0 560 185" role="img" aria-label="Ingresos diarios de pedidos pagados durante los últimos siete días"><line x1="24" y1="142" x2="540" y2="142" stroke="#d7cdb7"/>${bars}</svg>`;
+  dashboardRefs.revenueChart.innerHTML = `<svg viewBox="0 0 560 185" role="img" aria-label="Ingresos diarios de pedidos con pago confirmado durante los últimos siete días"><line x1="24" y1="142" x2="540" y2="142" stroke="#d7cdb7"/>${bars}</svg>`;
 }
 
 function renderProducts(rows) {
@@ -372,19 +372,75 @@ async function loadDashboard() {
   }
 }
 
+const loginRefs = {
+  panel: document.querySelector("#login-panel"),
+  form: document.querySelector("#dashboard-login-form"),
+  error: document.querySelector("#dashboard-login-error"),
+  content: document.querySelector("#dashboard-content"),
+  refresh: document.querySelector("#refresh-dashboard"),
+  logout: document.querySelector("#logout-dashboard"),
+};
+
+function showLoginOnly(message = "") {
+  loginRefs.panel.hidden = false;
+  loginRefs.content.hidden = true;
+  loginRefs.refresh.hidden = true;
+  loginRefs.logout.hidden = true;
+  Object.values(dashboardRefs).forEach((node) => { if (node && node !== dashboardRefs.message) node.innerHTML = ""; });
+  loginRefs.error.textContent = message;
+  showDashboardMessage("Inicia sesión con una cuenta administradora para ver los datos.");
+}
+
+async function showDashboardContent() {
+  loginRefs.panel.hidden = true;
+  loginRefs.content.hidden = false;
+  loginRefs.refresh.hidden = false;
+  loginRefs.logout.hidden = false;
+  await loadDashboard();
+}
+
+async function handleDashboardLogin(event) {
+  event.preventDefault();
+  loginRefs.error.textContent = "";
+  const email = loginRefs.form.elements.email.value.trim();
+  const password = loginRefs.form.elements.password.value;
+  if (!email || !password) { loginRefs.error.textContent = "Introduce tu correo y tu contraseña."; return; }
+  try {
+    const result = await dashboardRequest("../api/auth/login.php", { method: "POST", body: JSON.stringify({ email, password }) });
+    loginRefs.form.reset();
+    if (result.user?.role !== "administrador") {
+      await dashboardRequest("../api/auth/logout.php", { method: "POST", body: "{}" });
+      showLoginOnly("Esta cuenta no tiene permisos de administración.");
+      return;
+    }
+    await showDashboardContent();
+  } catch (error) {
+    loginRefs.form.elements.password.value = "";
+    loginRefs.error.textContent = error.message;
+  }
+}
+
+async function handleDashboardLogout() {
+  try { await dashboardRequest("../api/auth/logout.php", { method: "POST", body: "{}" }); } catch (error) { /* la sesión se cierra igualmente en pantalla */ }
+  showLoginOnly();
+}
+
 async function initializeDashboard() {
   try {
     const session = await dashboardRequest("../api/auth/session.php");
     dashboardCsrfToken = session.csrfToken || "";
     if (!session.authenticated || session.user?.role !== "administrador") {
-      showDashboardMessage("Inicia sesión con una cuenta administradora para ver estos datos.", "error");
+      showLoginOnly();
       return;
     }
-    await loadDashboard();
+    await showDashboardContent();
   } catch (error) {
+    showLoginOnly();
     showDashboardMessage(error.message, "error");
   }
 }
 
+loginRefs.form.addEventListener("submit", handleDashboardLogin);
+loginRefs.logout.addEventListener("click", handleDashboardLogout);
 document.querySelector("#refresh-dashboard").addEventListener("click", loadDashboard);
 initializeDashboard();
